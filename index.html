@@ -3103,9 +3103,6 @@ function init() {
 		{ name:'Original Artist', width:160, filter:true, sort:true, getter:function(d) { return d.data.originalArtist } },
 		{ name:'Covered By', width:128, filter:true, sort:true, getter:function(d) { return d.data.coveredBy } },
 		{ name:'Category', width:120, filter:true, sort:true, getter:function(d) { return d.data.category } },
-		{ name:'Start', width:80, getter:function(d) { return isUndefined(d.data.start, '') } },
-		{ name:'End', width:80, getter:function(d) { return isUndefined(d.data.end, '') } },
-		{ name:'ID', width:120, filter:true, sort:true, getter:function(d) { return isUndefined(d.data.ID, '') } },
 		{ name:'ShufflePriority', width:150, filter:true, sort:true, numeric:true, getter:function(d) { return d.shufflePriority } },
 		{ name:'Ordinal', width:88, id:'ordinal', filter:true, sort:true, numeric:true, getter:function(item) { return playListItem_getOrdinal(item) } },
 	]
@@ -3233,11 +3230,11 @@ function init() {
 		}},
 		{ name:'Date', width:110, id:'date', filter:true, sort:true },
 		{ name:'Track Name', width:400, filter:true, sort:true, id:'trackName', autoSize:true },
+		{ name:'Category', width:120, filter:true, sort:true, id:'category' },
 		{ name:'Original Artist', width:160, filter:true, sort:true, id:'originalArtist' },
 		{ name:'Covered By', width:128, id:'coveredBy', filter:true, sort:true },
 		{ name:'Count', width:100, filter:true, sort:true, numeric:true, getter:function(d) { return d.items.length } },
 		{ name:'Used', width:80, id:'refCount', filter:true, sort:true },
-		{ name:'Category', width:120, filter:true, sort:true, id:'category' },
 	]
 	playListTable = new MultiColumnList(playList)
 	playListTable.selectMode = isMobile.any() != null
