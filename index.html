@@ -9,6 +9,17 @@ var additionalVideoClips = []
 	</script>
 	<script type="text/javascript" charset="utf-8">
 let videoClipList = [
+{ category:"うた枠！わためぇ Night Feverとか🐏", ID:"rFg--6kU4uM", start:"00:11:37", end:"00:15:02", date:"2022-05-09", trackName:"ルパン三世のテーマ [Lupin The Third]", coveredBy:"角巻わため", originalArtist:"ピートマック・ジュニア" },
+{ category:"うた枠！わためぇ Night Feverとか🐏", ID:"rFg--6kU4uM", start:"00:16:45", end:"00:20:40", date:"2022-05-09", trackName:"ギリギリchop [Girigiri Chop]", coveredBy:"角巻わため", originalArtist:"B'z" },
+{ category:"うた枠！わためぇ Night Feverとか🐏", ID:"rFg--6kU4uM", start:"00:22:31", end:"00:26:39", date:"2022-05-09", trackName:"からくりピエロ [Karakuri Pierrot]", coveredBy:"角巻わため", originalArtist:"40mP feat. 初音ミク" },
+{ category:"うた枠！わためぇ Night Feverとか🐏", ID:"rFg--6kU4uM", start:"00:28:50", end:"00:34:07", date:"2022-05-09", trackName:"ETERNAL BLAZE", coveredBy:"角巻わため", originalArtist:"水樹奈々" },
+{ category:"うた枠！わためぇ Night Feverとか🐏", ID:"rFg--6kU4uM", start:"00:37:07", end:"00:40:10", date:"2022-05-09", trackName:"残響散歌 [Zankyou Sanka]", coveredBy:"角巻わため", originalArtist:"Aimer" },
+{ category:"うた枠！わためぇ Night Feverとか🐏", ID:"rFg--6kU4uM", start:"00:41:24", end:"00:45:10", date:"2022-05-09", trackName:"乙女解剖 [Otome Kaibou]", coveredBy:"角巻わため", originalArtist:"DECO*27" },
+{ category:"うた枠！わためぇ Night Feverとか🐏", ID:"rFg--6kU4uM", start:"00:47:33", end:"00:50:33", date:"2022-05-09", trackName:"回る空うさぎ [Mawaru Sora Usagi]", coveredBy:"角巻わため", originalArtist:"Orangestar feat. 初音ミク" },
+{ category:"うた枠！わためぇ Night Feverとか🐏", ID:"rFg--6kU4uM", start:"00:54:03", end:"00:58:36", date:"2022-05-09", trackName:"ミュージック・アワー [Music Hour]", coveredBy:"角巻わため", originalArtist:"ポルノグラフィティ" },
+{ category:"うた枠！わためぇ Night Feverとか🐏", ID:"rFg--6kU4uM", start:"01:04:34", end:"01:07:47", date:"2022-05-09", trackName:"フォニイ [Phony]", coveredBy:"角巻わため", originalArtist:"ツミキ feat. 可不(KAFU)" },
+{ category:"うた枠！わためぇ Night Feverとか🐏", ID:"rFg--6kU4uM", start:"01:08:38", end:"01:11:03", date:"2022-05-09", trackName:"ぼくはくま [Boku wa Kuma]", coveredBy:"角巻わため", originalArtist:"宇多田ヒカル" },
+{ category:"うた枠！わためぇ Night Feverとか🐏", ID:"rFg--6kU4uM", start:"01:13:33", end:"01:17:52", date:"2022-05-09", trackName:"mayday,mayday", coveredBy:"角巻わため", originalArtist:"角巻わため" },
 { category:"うた枠！わためぇ Night Feverとか🐏", ID:"CyWMHJjui6s", start:"00:13:27", end:"00:17:02", date:"2022-04-28", trackName:"踊 [Odo]", coveredBy:"角巻わため", originalArtist:"Ado" },
 { category:"うた枠！わためぇ Night Feverとか🐏", ID:"CyWMHJjui6s", start:"00:19:15", end:"00:22:31", date:"2022-04-28", trackName:"ベノム [Venom]", coveredBy:"角巻わため", originalArtist:"かいりきベア feat.flower" },
 { category:"うた枠！わためぇ Night Feverとか🐏", ID:"CyWMHJjui6s", start:"00:24:24", end:"00:28:18", date:"2022-04-28", trackName:"Clattanoia", coveredBy:"角巻わため", originalArtist:"OxT" },
@@ -3375,7 +3386,7 @@ function init() {
 	
 			
 	let playListItems = []
-	if (playListData != undefined) {
+	if (playListData != undefined && playListData.length > 0) {
 		showTotallist.checked = false
 		showPlaylist.checked = false
 		showPlaylistItems.checked = true
@@ -4862,7 +4873,11 @@ function playList_getJson() {
 		const items = []
 		for (let j = 0; j < data.items.length; ++j) {
 			let item = data.items[j]
-			items.push({ key:item.data.key, shufflePriority:item.shufflePriority })
+			let itemData = { key:item.data.key }
+			if (item.shufflePriority != 0) {
+				itemData.shufflePriority = item.shufflePriority
+			}
+			items.push(itemData)
 		}
 		playListSaveData.push({ key:data.key, category:data.category, date:data.date, trackName:data.trackName, originalArtist:data.originalArtist, coveredBy:data.coveredBy, items:items, shuffle:data.shuffle, entirePlay:data.entirePlay })
 	}
@@ -4871,7 +4886,9 @@ function playList_getJson() {
 function volume_getJson() {
 	let individualVolumeList = []
 	for (let val of individualVolumeMap) {
-		individualVolumeList.push(val)
+		if (val[1] != 0) {
+			individualVolumeList.push(val)
+		}
 	}
 
 	return individualVolumeList
