@@ -4136,7 +4136,7 @@ function playList_insertItem(playList, data, atDataKey=null, front=false) {
 	if (playList == null) {
 		playList = currentViewContext.data
 	}
-	let item = { key:newKey, playList:playList, data:data }
+	let item = { key:newKey, playList:playList, data:data, shufflePriority:0 }
 	++data.refCount
 
 	if (currentViewContext.data == playList) {
@@ -4173,7 +4173,7 @@ function playList_insertItems(playList, datas, atDataKey=null, front=false) {
 	let items = []
 	for (let i = 0; i < datas.length; ++i) {
 		let data = datas[i]
-		items.push({ key:nextPlayItemSN++, playList:playList, data:data })
+		items.push({ key:nextPlayItemSN++, playList:playList, data:data, shufflePriority:0 })
 		++data.refCount
 		}
 	
@@ -4227,11 +4227,11 @@ function playList_insertItems(playList, mayDataList, atDataKey=null, front=false
 	if (Array.isArray(mayDataList)) {
 		for (let i = 0; i < mayDataList.length; ++i) {
 			let data = mayDataList[i]
-			items.push({ key:nextPlayItemSN++, playList:playList, data:data })
+			items.push({ key:nextPlayItemSN++, playList:playList, data:data, shufflePriority:0 })
 			++data.refCount
 			}
 	} else {
-		items.push({ key:nextPlayItemSN++, playList:playList, data:mayDataList })
+		items.push({ key:nextPlayItemSN++, playList:playList, data:mayDataList, shufflePriority:0 })
 		++mayDataList.refCount
 	}
 	
