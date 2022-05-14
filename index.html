@@ -1930,6 +1930,13 @@ function readData()
 			settingsData.clipSpreadSheetURL = defaultClipSpreadSheetURL
 		}
 	}
+			
+	if (individualVolumeData) {
+		for (let i = 0; i < individualVolumeData.length; ++i) {
+			let data = individualVolumeData[i]
+			individualVolumeMap.set(data[0], data[1])
+		}
+	}
 
     google.charts.load('current', { packages: ['corechart'] }).then(function () {
         var query = new google.visualization.Query(settingsData.clipSpreadSheetURL);
@@ -2063,19 +2070,13 @@ function readData()
 					playListItems.push(playList)
 				}
 			}
-			
-			if (individualVolumeData) {
-				for (let i = 0; i < individualVolumeData.length; ++i) {
-					let data = individualVolumeData[i]
-					individualVolumeMap.set(data[0], data[1])
-				}
-			}
 			if (playListItems.length) {
 				playList_open(playListItems[0])
 			}
 			playListTable.setData(playListItems)
 			videoClipTable.updateList()
-			
+			refreshControlPanel()
+			updateDivVisible()
         });
     });
 }
