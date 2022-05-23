@@ -3688,6 +3688,9 @@ function playContext_refreshPlayerOrderMap(playContext) {
 	}
 }
 function playContext_shuffleByPriority(playOrder) {
+	if (playOrder.length <= 0) {
+		return
+	}
 	playOrder.sort(function(a,b) {
 		a = a.shufflePriority
 		b = b.shufflePriority
@@ -4081,6 +4084,7 @@ function totalList_makePlayListPanel(selectedClip) {
 			makeSearchText(playList)
 			playListTable.insertData(playList)
 			playListTable.selectedDataKey = playList.key
+			videoClipTable.updateList()
 			setDataChanged()
 		}
 	}
