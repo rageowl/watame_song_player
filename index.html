@@ -3311,7 +3311,7 @@ function tempAlert(msg,duration) {
 	document.body.appendChild(el);
 }
 function player_getPlayerState() {
-	return playerLoaded ? player.getPlayerState() : YT.PlayerState.ENDED
+	return playerLoaded ? player.getPlayerState() : 0
 }
 function refreshPlayButton() {
 	if (popupWnd) {
