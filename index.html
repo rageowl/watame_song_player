@@ -3325,7 +3325,7 @@ function refreshPlayButton() {
 		let state = player_getPlayerState()
 		if (playButton.state != state) {
 			playButton.state = state
-			if (state == YT.PlayerState.PLAYING) {
+			if (state == 1) {
 				playButton.innerHTML = '\u23f8'
 				playButton.title = 'Pause'
 			} else {
