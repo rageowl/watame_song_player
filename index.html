@@ -1,7 +1,6 @@
 <html>
 	<title>Watame's Song Player</title>
 	<meta charset="UTF-8">
-	<script src="https://www.youtube.com/iframe_api"></script>
 	<script type="text/javascript" charset="utf-8">
 var playingList = undefined
 var playListData = undefined
@@ -3312,7 +3311,7 @@ function tempAlert(msg,duration) {
 	document.body.appendChild(el);
 }
 function player_getPlayerState() {
-	return playerLoaded ? player.getPlayerState() : 0
+	return playerLoaded ? player.getPlayerState() : YT.PlayerState.ENDED
 }
 function refreshPlayButton() {
 	if (popupWnd) {
@@ -3325,7 +3324,7 @@ function refreshPlayButton() {
 		let state = player_getPlayerState()
 		if (playButton.state != state) {
 			playButton.state = state
-			if (state == 1) {
+			if (state == YT.PlayerState.PLAYING) {
 				playButton.innerHTML = '\u23f8'
 				playButton.title = 'Pause'
 			} else {
@@ -4985,6 +4984,7 @@ function importList() {
 				</div>
 			</div>
 		</div>
+		<script src="https://www.youtube.com/iframe_api"></script>
 		<div id="divPlayer">
 			<div id="player"></div>
 		</div>
