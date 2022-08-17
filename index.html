@@ -4703,7 +4703,6 @@ function individualVolume_save(key, relVolume) {
 	}
 }
 function volumeControl_update(value) {
-	volumeText.innerHTML = value + "%"
 	if (individualVolume.checked && currentVideoClip) {
 		if (individualVolumeControl.value != value) {
 			individualVolumeControl.value = value
@@ -4714,14 +4713,15 @@ function volumeControl_update(value) {
 	} else if (volumeControl.value != value) {
 		volumeControl.value = value
 		individualVolumeControl.value = value
+		volumeText.innerHTML = value + "%"
 		individualVolumeText.innerHTML = value + "%"
 	}
 }
 function volumeControl_set(value) {
-	volumeText.innerHTML = value + "%"
 	if (individualVolume.checked && currentVideoClip) {
 		const relVolume = individualVolumeMap.get(currentVideoClip.key)
 		if (relVolume != undefined) {
+			volumeText.innerHTML = value + "%"
 			value = Number(value) + relVolume
 			individualVolumeControl.value = value
 			individualVolumeText.innerHTML = value + "%"
@@ -4730,6 +4730,7 @@ function volumeControl_set(value) {
 	} else {
 		player.setVolume(value)
 		individualVolumeControl.value = value
+		volumeText.innerHTML = value + "%"
 		individualVolumeText.innerHTML = value + "%"
 	}
 }
@@ -4754,12 +4755,13 @@ function volumeControl_onWheel(value) {
 	volumeControl.value = newVolume
 	volumeControl_set(newVolume)
 	event.preventDefault()
-	}
+}
 function individualVolumeControl_set(value) {
 	if (individualVolume.checked && currentVideoClip) {
 		player.setVolume(value)
 		let relVolume = Number(value) - Number(volumeControl.value)
 		individualVolume_save(currentVideoClip.key, relVolume)
+		individualVolumeText.innerHTML = value + "%"
 	}
 }
 function individualVolumeControl_oninput(value) {
