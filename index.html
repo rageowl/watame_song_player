@@ -5,7 +5,8 @@
 var playingList = undefined
 var playListData = undefined
 var individualVolumeData = undefined
-let defaultClipSpreadSheetURL = 'http://spreadsheets.google.com/tq?key=1vpbCjP0UorTAiEHx9sOTGF1oNfpwW1jIZ6v1npQExEk'
+const SheetHeader = "http://spreadsheets.google.com/tq?key="
+let defaultClipSpreadSheetURL = ['1vpbCjP0UorTAiEHx9sOTGF1oNfpwW1jIZ6v1npQExEk']
 var settingsData = { clipSpreadSheetURL:defaultClipSpreadSheetURL }
 	</script>
 	<script src="https://www.gstatic.com/charts/loader.js"></script>
@@ -1882,6 +1883,7 @@ let dataChanged = false
 let totalListContextMenu = null
 let playListContextMenu = null
 let playListItemsContextMenu = null
+let spreadsheetsFormList = []
 
 function createSpan(element, style='') {
 	let span = document.createElement('span')
@@ -1909,7 +1911,182 @@ let isMobile = {
 		return (isMobile.Android() || isMobile.BlackBerry() || isMobile.iOS() || isMobile.Opera() || isMobile.Windows());
 	}
 };
+function settings_AddURL(value)
+{
+	let div = document.createElement('div')
+	div.style.display = 'flex'
+	let edit = document.createElement('input');
+	edit.type = 'text'
+	edit.value = value
+	edit.style.flex = '1'
+	let openSheet = document.createElement('button');
+	openSheet.style.flex = 'none'
+	let deleteSheet = document.createElement('button');
+	deleteSheet.style.flex = 'none'
+	div.appendChild(edit)
+	div.appendChild(openSheet)
+	div.appendChild(deleteSheet)
+	divClipSpreadSheetURL.appendChild(div);
+	spreadsheetsFormList.push(edit);
+	openSheet.textContent = 'OpenSheet'
+	openSheet.onclick = function() {
+		const url = 'https://docs.google.com/spreadsheets/d/' + edit.value;
+		window.open(url, '_blank')
+	}
+	deleteSheet.textContent = 'Delete'
+	deleteSheet.onclick = function() {
+		divClipSpreadSheetURL.removeChild(div)
+		const idx = spreadsheetsFormList.indexOf(edit)
+		if (idx >= 0) {
+			spreadsheetsFormList.splice(idx, 1)
+		}
+	}
+}
 
+function readData_Finalize()
+{
+	let prevID = ''
+	let counter = 0
+	for (let i = 0; i < videoClipList.length; ++i) {
+		let value = videoClipList[i]
+		//console.log(value)
+		makeSearchText(value)
+		if (prevID != value.ID) {
+			prevID = value.ID
+			counter = 0
+		}
+		value.type = 1
+		value.ordinal = i + 1
+		value.key = value.ID + '_' + ++counter
+		value.refCount = 0
+		videoClipMap.set(value.key, value)
+	}
+
+	videoClipTable.setData(videoClipList)
+			
+	let playListItems = []
+	if (playListData != undefined && playListData.length > 0) {
+		showTotallist.checked = false
+		showPlaylist.checked = false
+		showPlaylistItems.checked = true
+		let playListMap = new Map()
+		for (let i = 0; i < playListData.length; ++i) {
+			let playList = playList_load(playListData[i])
+			playListItems.push(playList)
+			playListMap.set(playList.key, playList)
+		}
+		for (let i = 0; i < playListData.length; ++i) {
+			const playList = playListItems[i]
+			const items = playListData[i].items
+			for (let j = 0; j < items.length; ++j) {
+				const item = items[j]
+				const key = item.key
+				let data = playListMap.get(key)
+				if (data == undefined) {
+					data = videoClipMap.get(key)
+				}
+				if (data != undefined) {
+					playList_newItem(playList, data, item.shufflePriority)
+					continue
+				}
+			}
+		}
+	} else {
+		if (playingList != undefined) {
+			showTotallist.checked = false
+			showPlaylist.checked = false
+			showPlaylistItems.checked = true
+			let playList = playList_new()
+			playList.trackName = 'わためぇ Night Fever'
+			playList.originalArtist = 'Various Artist'
+			playList.coveredBy = 'Various Artist'
+			playList.category = 'うた枠！わためぇ Night Feverとか🐏'
+			playList.shuffle = false
+			makeSearchText(playList)
+			for (let i = 0; i < playingList.length; ++i) {
+					let data = videoClipMap.get(playingList[i])
+					if (data != undefined) {
+						playList_newItem(playList, data, 0)
+				}
+			}
+			
+			playListItems.push(playList)
+		} else {
+			const defaultCategory = 'うた枠！わためぇ Night Feverとか🐏'
+			showTotallist.checked = false
+			showPlaylist.checked = false
+			showPlaylistItems.checked = true
+			let playList = playList_new()
+			playList.trackName = 'わためぇ Night Fever'
+			playList.originalArtist = 'Various Artist'
+			playList.coveredBy = '角巻わため'
+			playList.category = defaultCategory
+			playList.shuffle = false
+			makeSearchText(playList)
+
+			const headers = videoClipTable.selectHeader(['category'])
+			const categoryGroupMap = dataList_groupBy(videoClipList, headers)
+			
+			for (let clipItem of categoryGroupMap.get(defaultCategory)) {
+				playList_newItem(playList, clipItem, 0)
+			}
+			playListItems.push(playList)
+		}
+	}
+	if (playListItems.length) {
+		playList_open(playListItems[0])
+	}
+	playListTable.setData(playListItems)
+	videoClipTable.updateList()
+	refreshControlPanel()
+	updateDivVisible()
+}
+function readData_LoadSheet(dataTable, sheetIdx)
+{
+	var jsonData = dataTable.toJSON();
+	jsonData = JSON.parse(jsonData);
+	let idxMap = new Map()
+	let header = jsonData.rows[0].c
+	for (let i = 0; i < header.length; ++i) {
+		let label = header[i]
+		if (label == null) {
+			continue
+		}
+		label = label.v
+		if (label == null || label.length == 0) {
+			continue
+		}
+		label = label.toUpperCase()
+		idxMap[label] = i
+	}
+
+	let dateIdx = idxMap['DATE']
+	let trackNameIdx = idxMap['TRACKNAME']
+	let originalArtistIdx = idxMap['ORIGINALARTIST']
+	let coveredByIdx = idxMap['COVEREDBY']
+	let categoryIdx = idxMap['CATEGORY']
+	let startIdx = idxMap['START']
+	let endIdx = idxMap['END']
+	let idIdx = idxMap['ID']
+	
+	function getVal(c, idx)
+	{
+		let m = c[idx]
+		return m != null ? m.v : ''
+	}
+	for(var i=1; i < jsonData.rows.length; i++)
+	{
+		let c = jsonData.rows[i].c
+		let row = { category:getVal(c, categoryIdx), ID:getVal(c, idIdx), start:getVal(c, startIdx), end:getVal(c, endIdx), date:getVal(c, dateIdx), trackName:getVal(c, trackNameIdx), coveredBy:getVal(c, coveredByIdx), originalArtist:getVal(c, originalArtistIdx) }
+		videoClipList.push(row)
+	}
+	if (++sheetIdx == settingsData.clipSpreadSheetURL.length) {
+		readData_Finalize()
+	} else {
+		var query = new google.visualization.Query(SheetHeader + settingsData.clipSpreadSheetURL[sheetIdx]);
+		query.send(function(response) { readData_LoadSheet(response.getDataTable(), sheetIdx) });
+	}
+}
 function readData()
 {
 	let playListDataText = localStorage.getItem('watamePlayer_PlayList')
@@ -1929,8 +2106,20 @@ function readData()
 		if (settingsData.clipSpreadSheetURL == undefined) {
 			settingsData.clipSpreadSheetURL = defaultClipSpreadSheetURL
 		}
+		else if (typeof settingsData.clipSpreadSheetURL == 'string') {
+			if (settingsData.clipSpreadSheetURL.startsWith(SheetHeader)) {
+				settingsData.clipSpreadSheetURL = settingsData.clipSpreadSheetURL.substring(SheetHeader.length)
+			}
+			settingsData.clipSpreadSheetURL = [settingsData.clipSpreadSheetURL]
+		}
 	}
-			
+	
+	divClipSpreadSheetURL.replaceChildren();
+	spreadsheetsFormList = []
+	for (let i = 0; i < settingsData.clipSpreadSheetURL.length; ++i) {
+		settings_AddURL(settingsData.clipSpreadSheetURL[i])
+	}
+
 	if (individualVolumeData) {
 		for (let i = 0; i < individualVolumeData.length; ++i) {
 			let data = individualVolumeData[i]
@@ -1939,154 +2128,26 @@ function readData()
 	}
 
     google.charts.load('current', { packages: ['corechart'] }).then(function () {
-        var query = new google.visualization.Query(settingsData.clipSpreadSheetURL);
-        query.send(function (response) {            
-            var dataTable = response.getDataTable();
-            var jsonData = dataTable.toJSON();
-            jsonData = JSON.parse(jsonData);
-            let idxMap = new Map()
-            let header = jsonData.rows[0].c
-            for (let i = 0; i < header.length; ++i) {
-                let label = header[i]
-                if (label == null) {
-                    continue
-                }
-                label = label.v
-                if (label == null || label.length == 0) {
-                    continue
-                }
-                label = label.toUpperCase()
-                idxMap[label] = i
-            }
-
-            let dateIdx = idxMap['DATE']
-            let trackNameIdx = idxMap['TRACKNAME']
-            let originalArtistIdx = idxMap['ORIGINALARTIST']
-            let coveredByIdx = idxMap['COVEREDBY']
-            let categoryIdx = idxMap['CATEGORY']
-            let startIdx = idxMap['START']
-            let endIdx = idxMap['END']
-            let idIdx = idxMap['ID']
-
-            videoClipList = new Array()
-			
-			function getVal(c, idx)
-			{
-				let m = c[idx]
-				return m != null ? m.v : ''
-			}
-            for(var i=1; i < jsonData.rows.length; i++)
-            {
-                let c = jsonData.rows[i].c
-                let row = { category:getVal(c, categoryIdx), ID:getVal(c, idIdx), start:getVal(c, startIdx), end:getVal(c, endIdx), date:getVal(c, dateIdx), trackName:getVal(c, trackNameIdx), coveredBy:getVal(c, coveredByIdx), originalArtist:getVal(c, originalArtistIdx) }
-                videoClipList.push(row)
-            }
-
-			let prevID = ''
-			let counter = 0
-			for (let i = 0; i < videoClipList.length; ++i) {
-				let value = videoClipList[i]
-				//console.log(value)
-				makeSearchText(value)
-				if (prevID != value.ID) {
-					prevID = value.ID
-					counter = 0
-				}
-				value.type = 1
-				value.ordinal = i + 1
-				value.key = value.ID + '_' + ++counter
-				value.refCount = 0
-				videoClipMap.set(value.key, value)
-			}
-		
-			videoClipTable.setData(videoClipList)
-					
-			let playListItems = []
-			if (playListData != undefined && playListData.length > 0) {
-				showTotallist.checked = false
-				showPlaylist.checked = false
-				showPlaylistItems.checked = true
-				let playListMap = new Map()
-				for (let i = 0; i < playListData.length; ++i) {
-					let playList = playList_load(playListData[i])
-					playListItems.push(playList)
-					playListMap.set(playList.key, playList)
-				}
-				for (let i = 0; i < playListData.length; ++i) {
-					const playList = playListItems[i]
-					const items = playListData[i].items
-					for (let j = 0; j < items.length; ++j) {
-						const item = items[j]
-						const key = item.key
-						let data = playListMap.get(key)
-						if (data == undefined) {
-							data = videoClipMap.get(key)
-						}
-						if (data != undefined) {
-							playList_newItem(playList, data, item.shufflePriority)
-							continue
-						}
-					}
-				}
-			} else {
-				if (playingList != undefined) {
-					showTotallist.checked = false
-					showPlaylist.checked = false
-					showPlaylistItems.checked = true
-					let playList = playList_new()
-					playList.trackName = 'わためぇ Night Fever'
-					playList.originalArtist = 'Various Artist'
-					playList.coveredBy = 'Various Artist'
-					playList.category = 'うた枠！わためぇ Night Feverとか🐏'
-					playList.shuffle = false
-					makeSearchText(playList)
-					for (let i = 0; i < playingList.length; ++i) {
-							let data = videoClipMap.get(playingList[i])
-							if (data != undefined) {
-								playList_newItem(playList, data, 0)
-						}
-					}
-					
-					playListItems.push(playList)
-				} else {
-					const defaultCategory = 'うた枠！わためぇ Night Feverとか🐏'
-					showTotallist.checked = false
-					showPlaylist.checked = false
-					showPlaylistItems.checked = true
-					let playList = playList_new()
-					playList.trackName = 'わためぇ Night Fever'
-					playList.originalArtist = 'Various Artist'
-					playList.coveredBy = '角巻わため'
-					playList.category = defaultCategory
-					playList.shuffle = false
-					makeSearchText(playList)
-
-					const headers = videoClipTable.selectHeader(['category'])
-					const categoryGroupMap = dataList_groupBy(videoClipList, headers)
-					
-					for (let clipItem of categoryGroupMap.get(defaultCategory)) {
-						playList_newItem(playList, clipItem, 0)
-					}
-					playListItems.push(playList)
-				}
-			}
-			if (playListItems.length) {
-				playList_open(playListItems[0])
-			}
-			playListTable.setData(playListItems)
-			videoClipTable.updateList()
-			refreshControlPanel()
-			updateDivVisible()
-        });
+		videoClipList = new Array()
+		var query = new google.visualization.Query(SheetHeader + settingsData.clipSpreadSheetURL[0]);
+		query.send(function(response) { readData_LoadSheet(response.getDataTable(), 0) });
     });
 }
 function init() {
+	window.addEventListener('beforeunload', (event) => {
+		let state = player_getPlayerState()
+		if (state == YT.PlayerState.PLAYING || state == YT.PlayerState.BUFFERING) {
+			if (!confirm('Are you sure you want close window?')) {
+				event.preventDefault();
+				event.returnValue = '';
+			}
+		}
+	});
 	readData()
 	//alert(navigator.userAgent)
 	//alert(isMobile.any() != null)
 	prevButton.innerHTML = '\u23ea'
 	nextButton.innerText = '\u23e9'
-	clipSpreadSheetURL_Text.value = settingsData.clipSpreadSheetURL
 
 	let totalListHeaders = [
 		{ name:'Ordinal', width:88, id:'ordinal', filter:true, sort:true, numeric:true },
@@ -2131,7 +2192,17 @@ function init() {
 	}
 	
 	let playListDetailHeaders = [
-		{ name:'', width:40, getter:function(d) { for (let i = 0; i < playContextStack.length; ++i) { if (d.key == playContextStack[i].currentPlayingItem.key) { return '\u25b6' } } return '' } },
+		{ name:'', width:40, getter:function(d) {
+			for (let i = 0; i < playContextStack.length; ++i) {
+				if (d.key == playContextStack[i].currentPlayingItem.key) {
+					return '\u25b6'
+				}
+			}
+			if (viewContextStack.length > 0 && viewContextStack[viewContextStack.length - 1].currentPlayingItem && d.key == viewContextStack[viewContextStack.length - 1].currentPlayingItem.key) {
+				return '\u25b7'
+			}
+			return ''
+		}},
 		{ name:'Order', width:80, title:"Play Order", filter:true, sort:true, numeric:true, getter:function(d) {
 			return currentViewContext.playOrderMap.get(d.key) + 1
 		}},
@@ -2902,7 +2973,14 @@ function setDataChanged() {
 	playList_save()
 }
 function settings_getJson() {
-	let newClipSpreadSheetURL = clipSpreadSheetURL_Text.value
+	let newClipSpreadSheetURL = []
+	for (let i = 0; i < spreadsheetsFormList.length; ++i) {
+		const value = spreadsheetsFormList[i].value
+		if (value.length == 0) {
+			continue
+		}
+		newClipSpreadSheetURL.push(value)
+	}
 	let settings = {}
 	if (newClipSpreadSheetURL.length == 0) {
 		newClipSpreadSheetURL = defaultClipSpreadSheetURL
@@ -2912,6 +2990,9 @@ function settings_getJson() {
 }
 function settings_save() {
 	localStorage.setItem("watamePlayer_settings", JSON.stringify(settings_getJson()))
+}
+function settings_newURL() {
+	settings_AddURL('')
 }
 let playListSN = 1
 function playList_new() {
@@ -3799,7 +3880,7 @@ function updateDivVisible() {
 	divTotallist.style.display = showTotallist.checked ? 'flex' : 'none'
 	divPlaylistPanel.style.display = showPlaylist.checked ? 'flex' : 'none'
 	divPlaylistItemsPanel.style.display = showPlaylistItems.checked ? 'flex' : 'none'
-	divClipSpreadSheetURL.style.display = showClipTableURL.checked ? 'flex' : 'none'
+	divClipSpreadSheet.style.display = showClipTableURL.checked ? 'flex' : 'none'
 	//playListItemsTable.adjustScroll()
 }
 function playList_getJson() {
@@ -4105,7 +4186,6 @@ function totalList_makeGroupedPlayListPanel(selectedClip) {
 	totalListHeaderSelect_cbAppendIfExists.checked = false
 	totalListHeaderSelect_cbAppendToFront.checked = true
 	totalListHeaderSelect_cbAppendToFront.disabled = true
-	totalListHeaderSelect_cbMergedPlayList.checked = true				
 	totalListHeaderSelect_CommonCategory.value = "Various Category"
 	totalListHeaderSelect_CommonTrackName.value = "Various Track"
 	totalListHeaderSelect_CommonOriginalArtist.value = "Various Artist"
@@ -4151,42 +4231,7 @@ function totalList_makeGroupedPlayListPanel(selectedClip) {
 				commonTextMap : { category:commonCategory, trackName:commonTrackName, originalArtist:commonOriginalArtist, coveredBy:commonCoveredBy },
 			}
 			const playListData = totalList_makeGroupedPlayList(headers, option)
-			if (playListData.length && totalListHeaderSelect_cbMergedPlayList.checked) {
-				let playList = playList_new()
-				playList.category = null
-				playList.date = ''
-				playList.trackName = null
-				playList.originalArtist = null
-				for (let i = 0; i < playListData.length; ++i) {
-					const item = playListData[i]
-					playList_newItem(playList, item, 0)
-					playList.category = totalList_selectRepresentText(playList.category, item.category, 'Various Category')
-					playList.trackName = totalList_selectRepresentText(playList.trackName, item.trackName, 'Various Track')
-					playList.originalArtist = totalList_selectRepresentText(playList.originalArtist, item.originalArtist, 'Various Artist')
-					playList.coveredBy = totalList_selectRepresentText(playList.coveredBy, item.coveredBy, 'Various Artist')
-				}
-				makeSearchText(playList)
-
-				playListData.splice(0, 0, playList)
-				playListDialog_Category.value = playList.category
-				playListDialog_Date.value = date_today()
-				playListDialog_TrackName.value = playList.trackName
-				playListDialog_OriginalArtist.value = playList.originalArtist
-				playListDialog_CoveredBy.value = playList.coveredBy
-				playListDialog.onclose = function() {
-					if (playListDialog.returnValue == 'ok') {
-						playList.category = playListDialog_Category.value
-						playList.date = playListDialog_Date.value
-						playList.trackName = playListDialog_TrackName.value
-						playList.originalArtist = playListDialog_OriginalArtist.value
-						playList.coveredBy = playListDialog_CoveredBy.value
-						makeSearchText(playList)
-						playListTable.insertDataList(playListData)
-						playListTable.selectedDataKey = playList.key
-					}
-				}
-				playListDialog.showModal();
-			} else if (playListData.length) {
+			if (playListData.length) {
 				playListTable.clearSelection()
 				playListTable.insertDataList(playListData)
 				for (let i = 0; i < playListData.length; ++i) {
@@ -4658,28 +4703,34 @@ function individualVolume_save(key, relVolume) {
 	}
 }
 function volumeControl_update(value) {
+	volumeText.innerHTML = value + "%"
 	if (individualVolume.checked && currentVideoClip) {
 		if (individualVolumeControl.value != value) {
 			individualVolumeControl.value = value
+			individualVolumeText.innerHTML = value + "%"
 			const relVolume = Number(value) - Number(volumeControl.value)
 			individualVolume_save(currentVideoClip.key, relVolume)
 		}
 	} else if (volumeControl.value != value) {
 		volumeControl.value = value
 		individualVolumeControl.value = value
+		individualVolumeText.innerHTML = value + "%"
 	}
 }
 function volumeControl_set(value) {
+	volumeText.innerHTML = value + "%"
 	if (individualVolume.checked && currentVideoClip) {
 		const relVolume = individualVolumeMap.get(currentVideoClip.key)
 		if (relVolume != undefined) {
 			value = Number(value) + relVolume
 			individualVolumeControl.value = value
+			individualVolumeText.innerHTML = value + "%"
 			player.setVolume(value)
 		}
 	} else {
 		player.setVolume(value)
 		individualVolumeControl.value = value
+		individualVolumeText.innerHTML = value + "%"
 	}
 }
 function volumeControl_oninput(value) {
@@ -4859,10 +4910,12 @@ function importList() {
 				<label for="showPlaylistItems" style="cursor:pointer"><input id="showPlaylistItems" type="checkbox" onClick="updateDivVisible()" style="cursor:pointer">PlayListItems</label>
 				<label for="showClipTableURL" style="cursor:pointer"><input id="showClipTableURL" type="checkbox" onClick="updateDivVisible()" style="cursor:pointer">ClipSpreadSheetURL</label>
 			</div>
-			<div id="divClipSpreadSheetURL" style="flex:none;display:flex">
-				<input style="flex:1" type="text" id="clipSpreadSheetURL_Text">
-				<div style="flex:none">
+			<div id="divClipSpreadSheet" style="flex:none;display:flex;flex-direction: column;">
+				<div style="display:flex">
 					<button onClick="settings_save()">Save</button>
+					<button onClick="settings_newURL()">New</button>
+				</div>
+				<div id="divClipSpreadSheetURL" style="flex:none; display:flex; flex-direction:column;">
 				</div>
 			</div>
 			<div style="flex-grow: 1;flex-shrink: 1;flex-basis: auto;overflow: hidden;display:flex;flex-direction:column;">
@@ -4972,8 +5025,14 @@ function importList() {
 							<label for="individualVolume" style="cursor:pointer"><input id="individualVolume" type="checkbox" style="cursor:pointer" onClick="individualVolume_onClick()">Individual</label>
 						</div>
 						<div style="display: flex;flex-direction: column;align-items: stretch;">
-							<input type="range" id="volumeControl" oninput="volumeControl_oninput(this.value)" onchange="volumeControl_onchange(this.value)" onwheel="volumeControl_onWheel(event.deltaY)">
-							<input type="range" id="individualVolumeControl" disabled="disabled" oninput="individualVolumeControl_oninput(this.value)" onchange="individualVolumeControl_onchange(this.value)" onwheel="individualVolumeControl_onWheel(event.deltaY)">
+							<div style="display: flex;">
+								<input type="range" id="volumeControl" oninput="volumeControl_oninput(this.value)" onchange="volumeControl_onchange(this.value)" onwheel="volumeControl_onWheel(event.deltaY)">
+								<label id="volumeText">?</label>
+							</div>
+							<div style="display: flex;">
+								<input type="range" id="individualVolumeControl" disabled="disabled" oninput="individualVolumeControl_oninput(this.value)" onchange="individualVolumeControl_onchange(this.value)" onwheel="individualVolumeControl_onWheel(event.deltaY)">
+								<label id="individualVolumeText">?</label>
+							</div>
 						</div>
 					</div>
 					<div>
@@ -5048,7 +5107,6 @@ function importList() {
 			</div>
 			<p style="font-weight:bold;">Make Option</p>
 			<div style="display: flex; flex-direction: column; align-items: stretch;">
-				<label for="totalListHeaderSelect_cbMergedPlayList" style="cursor:pointer"><input id="totalListHeaderSelect_cbMergedPlayList" type="checkbox" style="cursor:pointer">Make Merged PlayList</label>
 				<label for="totalListHeaderSelect_cbAppendIfExists" style="cursor:pointer"><input id="totalListHeaderSelect_cbAppendIfExists" type="checkbox" style="cursor:pointer" onclick="totalListHeaderSelect_cbAppendToFront.disabled = !totalListHeaderSelect_cbAppendIfExists.checked">Append to PlayList if exists</label>
 				<label for="totalListHeaderSelect_cbAppendToFront" style="cursor:pointer"><input id="totalListHeaderSelect_cbAppendToFront" type="checkbox" style="cursor:pointer" checked="true" disabled="true">Append to Front</label>
 			</div>
