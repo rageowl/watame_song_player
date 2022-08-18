@@ -1945,19 +1945,16 @@ function settings_AddURL(value)
 
 function readData_Finalize()
 {
-	let prevID = ''
-	let counter = 0
+	let videoClipIDMap = new Map()
 	for (let i = 0; i < videoClipList.length; ++i) {
 		let value = videoClipList[i]
 		//console.log(value)
 		makeSearchText(value)
-		if (prevID != value.ID) {
-			prevID = value.ID
-			counter = 0
-		}
 		value.type = 1
 		value.ordinal = i + 1
-		value.key = value.ID + '_' + ++counter
+		const Counter = isUndefined(videoClipIDMap.get(value.ID), 1)
+		value.key = value.ID + '_' + Counter;
+		videoClipIDMap.set(value.ID, Counter + 1)
 		value.refCount = 0
 		videoClipMap.set(value.key, value)
 	}
@@ -2950,7 +2947,7 @@ function playListTable_deleteSelected() {
 	refreshControlPanel()
 	setDataChanged()
 }
-function playListTable_deleteAll() {
+function playListTable_deleteAll(bSave = true) {
 	if (playContextStack.length != 0) {
 		common_stopVideo(false)
 	}
@@ -2965,7 +2962,9 @@ function playListTable_deleteAll() {
 	}
 	videoClipTable.updateList()
 	refreshControlPanel()
-	setDataChanged()
+	if (bSave) {
+		setDataChanged()
+	}
 }
 function playContext_get(playList) {
 	let ctx = playContextMap.get(playList.key)
@@ -3002,6 +3001,8 @@ function settings_getJson() {
 }
 function settings_save() {
 	localStorage.setItem("watamePlayer_settings", JSON.stringify(settings_getJson()))
+	playListTable_deleteAll(false)
+	readData();
 }
 function settings_newURL() {
 	settings_AddURL('')
@@ -3117,6 +3118,7 @@ function refreshControlPanel() {
 	const useIndividualVolume = currentVideoClip && individualVolumeMap.has(currentVideoClip.key)
 	individualVolume.checked = useIndividualVolume
 	individualVolumeControl.disabled = !useIndividualVolume
+	volumeText.innerHTML = volumeControl.value + "%"
 	if (!useIndividualVolume) {
 		individualVolumeControl.value = volumeControl.value
 		individualVolumeText.innerHTML = volumeControl.value + "%"
@@ -4861,50 +4863,11 @@ function importList() {
 			playListTable_deleteAll()
 
 			let importData = JSON.parse(exportimportDialogEdit.value)
-			playListData = importData["playListData"]
-			individualVolumeData = importData["individualVolumeData"]
-			settingsData = importData["settings"]
+			localStorage.setItem("watamePlayer_PlayList", JSON.stringify(importData["playListData"]))
+			localStorage.setItem("watamePlayer_Volumes", JSON.stringify(importData["individualVolumeData"]))
+			localStorage.setItem("watamePlayer_settings", JSON.stringify(importData["settings"]))
 
-			let playListMap = new Map()
-			let playListItems = []
-			for (let i = 0; i < playListData.length; ++i) {
-				let playList = playList_load(playListData[i])
-				playListItems.push(playList)
-				playListMap.set(playList.key, playList)
-			}
-			for (let i = 0; i < playListData.length; ++i) {
-				const playList = playListItems[i]
-				const items = playListData[i].items
-				for (let j = 0; j < items.length; ++j) {
-					const item = items[j]
-					const key = item.key
-					let data = playListMap.get(key)
-					if (data == undefined) {
-						data = videoClipMap.get(key)
-					}
-					if (data != undefined) {
-						playList_newItem(playList, data, item.shufflePriority)
-						continue
-					}
-				}
-			}
-
-			if (individualVolumeData) {
-				individualVolumeMap.clear()
-				for (let i = 0; i < individualVolumeData.length; ++i) {
-					let data = individualVolumeData[i]
-					individualVolumeMap.set(data[0], data[1])
-				}
-			}
-
-			if (playListItems.length) {
-				playList_open(playListItems[0])
-			}
-			playListTable.setData(playListItems)
-			videoClipTable.updateList()
-			refreshControlPanel()
-			playList_save()
-			volume_save()
+			readData();
 		}
 	}
 	if (typeof exportimportDialog.showModal === "function") {
@@ -4927,7 +4890,7 @@ function importList() {
 			</div>
 			<div id="divClipSpreadSheet" style="flex:none;display:flex;flex-direction: column;">
 				<div style="display:flex">
-					<button onClick="settings_save()">Save</button>
+					<button onClick="settings_save()">Save&Refresh</button>
 					<button onClick="settings_newURL()">New</button>
 				</div>
 				<div id="divClipSpreadSheetURL" style="flex:none; display:flex; flex-direction:column;">
