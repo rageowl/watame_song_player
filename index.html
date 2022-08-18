@@ -1884,6 +1884,7 @@ let totalListContextMenu = null
 let playListContextMenu = null
 let playListItemsContextMenu = null
 let spreadsheetsFormList = []
+let isLoading = false;
 
 function createSpan(element, style='') {
 	let span = document.createElement('span')
@@ -2037,6 +2038,7 @@ function readData_Finalize()
 	videoClipTable.updateList()
 	refreshControlPanel()
 	updateDivVisible()
+	isLoading = false
 }
 function readData_LoadSheet(URL, dataTable, sheetIdx)
 {
@@ -2091,6 +2093,10 @@ function readData_LoadSheet(URL, dataTable, sheetIdx)
 }
 function readData()
 {
+	if (isLoading) {
+		return
+	}
+	isLoading = true;
 	let playListDataText = localStorage.getItem('watamePlayer_PlayList')
 	let individualVolumeDataText = localStorage.getItem('watamePlayer_Volumes')
 	if (playListDataText) {
@@ -4862,7 +4868,17 @@ function importList() {
 		if (exportimportDialog.returnValue == 'ok') {
 			playListTable_deleteAll()
 
-			let importData = JSON.parse(exportimportDialogEdit.value)
+			let importData = {
+				"playListData" : {},
+				"individualVolumeData" : {},
+				"settings" : {}
+			};
+			
+			try {
+				let Text = exportimportDialogEdit.value
+				importData = JSON.parse(Text)
+			} catch(err) {
+			}
 			localStorage.setItem("watamePlayer_PlayList", JSON.stringify(importData["playListData"]))
 			localStorage.setItem("watamePlayer_Volumes", JSON.stringify(importData["individualVolumeData"]))
 			localStorage.setItem("watamePlayer_settings", JSON.stringify(importData["settings"]))
