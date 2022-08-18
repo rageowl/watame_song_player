@@ -2041,50 +2041,55 @@ function readData_Finalize()
 	refreshControlPanel()
 	updateDivVisible()
 }
-function readData_LoadSheet(dataTable, sheetIdx)
+function readData_LoadSheet(URL, dataTable, sheetIdx)
 {
-	var jsonData = dataTable.toJSON();
-	jsonData = JSON.parse(jsonData);
-	let idxMap = new Map()
-	let header = jsonData.rows[0].c
-	for (let i = 0; i < header.length; ++i) {
-		let label = header[i]
-		if (label == null) {
-			continue
+	if (dataTable) {
+		var jsonData = dataTable.toJSON();
+		jsonData = JSON.parse(jsonData);
+		let idxMap = new Map()
+		let header = jsonData.rows[0].c
+		for (let i = 0; i < header.length; ++i) {
+			let label = header[i]
+			if (label == null) {
+				continue
+			}
+			label = label.v
+			if (label == null || label.length == 0) {
+				continue
+			}
+			label = label.toUpperCase()
+			idxMap[label] = i
 		}
-		label = label.v
-		if (label == null || label.length == 0) {
-			continue
-		}
-		label = label.toUpperCase()
-		idxMap[label] = i
-	}
 
-	let dateIdx = idxMap['DATE']
-	let trackNameIdx = idxMap['TRACKNAME']
-	let originalArtistIdx = idxMap['ORIGINALARTIST']
-	let coveredByIdx = idxMap['COVEREDBY']
-	let categoryIdx = idxMap['CATEGORY']
-	let startIdx = idxMap['START']
-	let endIdx = idxMap['END']
-	let idIdx = idxMap['ID']
-	
-	function getVal(c, idx)
-	{
-		let m = c[idx]
-		return m != null ? m.v : ''
-	}
-	for(var i=1; i < jsonData.rows.length; i++)
-	{
-		let c = jsonData.rows[i].c
-		let row = { category:getVal(c, categoryIdx), ID:getVal(c, idIdx), start:getVal(c, startIdx), end:getVal(c, endIdx), date:getVal(c, dateIdx), trackName:getVal(c, trackNameIdx), coveredBy:getVal(c, coveredByIdx), originalArtist:getVal(c, originalArtistIdx) }
-		videoClipList.push(row)
+		let dateIdx = idxMap['DATE']
+		let trackNameIdx = idxMap['TRACKNAME']
+		let originalArtistIdx = idxMap['ORIGINALARTIST']
+		let coveredByIdx = idxMap['COVEREDBY']
+		let categoryIdx = idxMap['CATEGORY']
+		let startIdx = idxMap['START']
+		let endIdx = idxMap['END']
+		let idIdx = idxMap['ID']
+		
+		function getVal(c, idx)
+		{
+			let m = c[idx]
+			return m != null ? m.v : ''
+		}
+		for(var i=1; i < jsonData.rows.length; i++)
+		{
+			let c = jsonData.rows[i].c
+			let row = { category:getVal(c, categoryIdx), ID:getVal(c, idIdx), start:getVal(c, startIdx), end:getVal(c, endIdx), date:getVal(c, dateIdx), trackName:getVal(c, trackNameIdx), coveredBy:getVal(c, coveredByIdx), originalArtist:getVal(c, originalArtistIdx) }
+			videoClipList.push(row)
+		}
+	} else {
+		alert('"' + URL + '" is wrong');
 	}
 	if (++sheetIdx == settingsData.clipSpreadSheetURL.length) {
 		readData_Finalize()
 	} else {
-		var query = new google.visualization.Query(SheetHeader + settingsData.clipSpreadSheetURL[sheetIdx]);
-		query.send(function(response) { readData_LoadSheet(response.getDataTable(), sheetIdx) });
+		const URL = SheetHeader + settingsData.clipSpreadSheetURL[sheetIdx]
+		var query = new google.visualization.Query(URL);
+		query.send(function(response) { readData_LoadSheet(URL, response.getDataTable(), sheetIdx) });
 	}
 }
 function readData()
@@ -2127,11 +2132,16 @@ function readData()
 		}
 	}
 
-    google.charts.load('current', { packages: ['corechart'] }).then(function () {
-		videoClipList = new Array()
-		var query = new google.visualization.Query(SheetHeader + settingsData.clipSpreadSheetURL[0]);
-		query.send(function(response) { readData_LoadSheet(response.getDataTable(), 0) });
-    });
+	if (settingsData.clipSpreadSheetURL.length > 0) {
+		google.charts.load('current', { packages: ['corechart'] }).then(function () {
+			videoClipList = new Array()
+			const URL = SheetHeader + settingsData.clipSpreadSheetURL[0]
+			var query = new google.visualization.Query(URL);
+			query.send(function(response) { readData_LoadSheet(URL, response.getDataTable(), 0) });
+		});
+	} else {
+		readData_Finalize();
+	}
 }
 function init() {
 	window.addEventListener('beforeunload', (event) => {
@@ -2342,6 +2352,8 @@ function init() {
 		{ name:'Category', width:120, filter:true, sort:true, id:'category' },
 		{ name:'Original Artist', width:160, filter:true, sort:true, id:'originalArtist' },
 		{ name:'Covered By', width:128, id:'coveredBy', filter:true, sort:true },
+		{ name:'Shuffle', width:88, filter:true, sort:false, getter:function(d) { return d.shuffle ? '1' : '0' } },
+		{ name:'PlayAll', width:88, filter:true, sort:false, getter:function(d) { return d.entirePlay ? '1' : '0' } },
 		{ name:'Count', width:100, filter:true, sort:true, numeric:true, getter:function(d) { return d.items.length } },
 		{ name:'Used', width:80, id:'refCount', filter:true, sort:true },
 	]
@@ -3107,6 +3119,7 @@ function refreshControlPanel() {
 	individualVolumeControl.disabled = !useIndividualVolume
 	if (!useIndividualVolume) {
 		individualVolumeControl.value = volumeControl.value
+		individualVolumeText.innerHTML = volumeControl.value + "%"
 	}
 	refreshPlayButton()
 }
@@ -4910,7 +4923,7 @@ function importList() {
 				<label for="showTotallist" style="cursor:pointer"><input id="showTotallist" type="checkbox" checked="true" onClick="updateDivVisible()" style="cursor:pointer">TotalList</label>
 				<label for="showPlaylist" style="cursor:pointer"><input id="showPlaylist" type="checkbox" onClick="updateDivVisible()" style="cursor:pointer">PlayList</label>
 				<label for="showPlaylistItems" style="cursor:pointer"><input id="showPlaylistItems" type="checkbox" onClick="updateDivVisible()" style="cursor:pointer">PlayListItems</label>
-				<label for="showClipTableURL" style="cursor:pointer"><input id="showClipTableURL" type="checkbox" onClick="updateDivVisible()" style="cursor:pointer">ClipSpreadSheetURL</label>
+				<label for="showClipTableURL" style="cursor:pointer"><input id="showClipTableURL" type="checkbox" onClick="updateDivVisible()" style="cursor:pointer">ClipSpreadSheets</label>
 			</div>
 			<div id="divClipSpreadSheet" style="flex:none;display:flex;flex-direction: column;">
 				<div style="display:flex">
@@ -4995,7 +5008,7 @@ function importList() {
 							<input type="button" onClick="playListItemsTable_moveDown()" value="Move down"/>
 							<input type="button" onClick="playListItemsTable_modify()" value="Batch Edit"/>
 							<label for="playList_checkBoxShuffle" style="cursor:pointer"><input id="playList_checkBoxShuffle" type="checkbox" style="cursor:pointer" onClick="playList_saveCheckboxes()">Shuffle</label>
-							<label for="playList_checkBoxPlayEntireList" style="cursor:pointer"><input id="playList_checkBoxPlayEntireList" type="checkbox" style="cursor:pointer" onClick="playList_saveCheckboxes()">PlayEntireItems</label>
+							<label for="playList_checkBoxPlayEntireList" style="cursor:pointer"><input id="playList_checkBoxPlayEntireList" type="checkbox" style="cursor:pointer" onClick="playList_saveCheckboxes()">PlayAll</label>
 						</div>
 						<div style="display:flex">
 							<input style="flex:1" type="search" id="playListItemsButton_search" onKeyUp="searchPlayListItems_onKeyUp()">
@@ -5066,7 +5079,7 @@ function importList() {
 					<input type="text" id="playListDialog_OriginalArtist">
 					<input type="text" id="playListDialog_CoveredBy">
 					<label for="playListDialog_cbShuffle" style="cursor:pointer"><input id="playListDialog_cbShuffle" type="checkbox" style="cursor:pointer">Shuffle</label>
-					<label for="playListDialog_cbPlayEntireVideo" style="cursor:pointer"><input id="playListDialog_cbPlayEntireVideo" type="checkbox" style="cursor:pointer">PlayEntireVideo</label>
+					<label for="playListDialog_cbPlayEntireVideo" style="cursor:pointer"><input id="playListDialog_cbPlayEntireVideo" type="checkbox" style="cursor:pointer">PlayAll</label>
 				</div>
 			</div>
 			<menu>
@@ -5105,7 +5118,7 @@ function importList() {
 			<p style="font-weight:bold;">Default Property</p>
 			<div style="display: flex; flex-direction: column; align-items: stretch;">
 				<label for="totalListHeaderSelect_cbShuffle" style="cursor:pointer"><input id="totalListHeaderSelect_cbShuffle" type="checkbox" style="cursor:pointer">Shuffle</label>
-				<label for="totalListHeaderSelect_cbPlayEntireVideo" style="cursor:pointer"><input id="totalListHeaderSelect_cbPlayEntireVideo" type="checkbox" style="cursor:pointer">PlayEntireVideo</label>
+				<label for="totalListHeaderSelect_cbPlayEntireVideo" style="cursor:pointer"><input id="totalListHeaderSelect_cbPlayEntireVideo" type="checkbox" style="cursor:pointer">PlayAll</label>
 			</div>
 			<p style="font-weight:bold;">Make Option</p>
 			<div style="display: flex; flex-direction: column; align-items: stretch;">
@@ -5173,7 +5186,7 @@ function importList() {
 					<div style="display: flex;">
 						<div style="display: flex; flex-direction: column; align-items: flex-end; padding-right: 2px;">
 							<label>Shuffle:</label>
-							<label>PlayEntireVideo:</label>
+							<label>PlayAll:</label>
 						</div>
 						<div style="display: flex; flex-direction: column; align-items: stretch;">
 							<select id="modifyPlayListDialog_Shuffle">
