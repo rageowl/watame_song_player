@@ -4154,6 +4154,8 @@ function totalList_makePlayListPanel(selectedClip) {
 	playListDialog_TrackName.value = ''
 	playListDialog_OriginalArtist.value = ''
 	playListDialog_CoveredBy.value = ''
+	playListDialog_cbShuffle.checked = false
+	playListDialog_cbPlayEntireVideo.checked = false
 
 	const commonCategory = 'Various Category'
 	const commonTrackName = 'Various Track'
@@ -4177,6 +4179,8 @@ function totalList_makePlayListPanel(selectedClip) {
 			playList.trackName = playListDialog_TrackName.value
 			playList.originalArtist = playListDialog_OriginalArtist.value
 			playList.coveredBy = playListDialog_CoveredBy.value
+			playList.shuffle = playListDialog_cbShuffle.checked;
+			playList.entirePlay = playListDialog_cbPlayEntireVideo.checked;
 
 			for (let i = 0; i < keys.length; ++i) {
 				let data = videoClipTable.getDataByKey(keys[i])
