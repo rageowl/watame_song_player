@@ -2146,6 +2146,34 @@ function readData()
 		readData_Finalize();
 	}
 }
+function StringToArray(str)
+{
+	const length = str.length;
+	const Array = new Uint8Array(length);
+	for (let i = 0; i < length; i++) {
+		Array[i] = str.charCodeAt(i);
+	}
+	return Array;
+}
+function ArrayToString(uint8Array) {
+  let str = '';
+  for (let i = 0; i < uint8Array.length; i++) {
+    str += String.fromCharCode(uint8Array[i]);
+  }
+  return str;
+}
+function base64UrlEncode(input) {
+  var base64 = btoa(input);
+  return base64.replace(/\+/g, '.').replace(/\//g, '_').replace(/=/g, '-');
+}
+
+function base64UrlDecode(input) {
+  input = input.replace(/\./g, '+').replace(/_/g, '/').replace(/-/g, '=');
+  while (input.length % 4) {
+    input += '=';
+  }
+  return atob(input);
+}
 function init() {
 	window.addEventListener('beforeunload', (event) => {
 		let state = player_getPlayerState()
@@ -2156,6 +2184,30 @@ function init() {
 			}
 		}
 	});
+	const urlParameter = window.location.search;
+	const urlParams = new URLSearchParams(urlParameter);
+	const importStr = urlParams.get('a');
+	if (importStr != null && importStr.length)
+	{
+		const importBinaryStr = base64UrlDecode(importStr);
+		const DataBinary = StringToArray(importBinaryStr);
+		const decoder = new TextDecoder();
+		const DataStr = decoder.decode(DataBinary);
+
+		let importData = {
+			"playListData" : {},
+			"individualVolumeData" : {},
+			"settings" : {}
+		};
+		
+		try {
+			importData = JSON.parse(DataStr)
+		} catch(err) {
+		}
+		localStorage.setItem("watamePlayer_PlayList", JSON.stringify(importData["playListData"]))
+		localStorage.setItem("watamePlayer_Volumes", JSON.stringify(importData["individualVolumeData"]))
+		localStorage.setItem("watamePlayer_settings", JSON.stringify(importData["settings"]))
+	}
 	readData()
 	//alert(navigator.userAgent)
 	//alert(isMobile.any() != null)
@@ -4855,7 +4907,19 @@ function exportList() {
 	exportData["playListData"] = playList_getJson()
 	exportData["individualVolumeData"] = volume_getJson()
 	exportData["settings"] = settings_getJson()
-	exportimportDialogEdit.value = JSON.stringify(exportData)
+	const DataStr = JSON.stringify(exportData)
+	const encoder = new TextEncoder();
+	const DataBinary = encoder.encode(DataStr);
+	const DataBinaryStr = ArrayToString(DataBinary);
+	const exportStr = base64UrlEncode(DataBinaryStr);
+	// const RevexportStr = base64UrlDecode(exportStr);
+	// const ReverseDataBinary = StringToArray(RevexportStr);
+	// const decoder = new TextDecoder();
+	// const ReverseDataStr = decoder.decode(ReverseDataBinary);
+	
+	const url = window.location.origin + window.location.pathname + '?a=' + exportStr;
+	//window.history.pushState({}, null, '?a=' + exportStr)
+	exportimportDialogEdit.value = url
 	exportimportDialog.onclose = function() {
 		if (exportimportDialog.returnValue == 'ok') {
 		}
@@ -4902,7 +4966,6 @@ function importList() {
 		<div style="max-width:100%;max-height:100%;display:flex;flex-direction:column;">
 			<div style="flex:none">
 				<input type="button" onClick="exportList()" value="Export"/>
-				<input type="button" onClick="importList()" value="Import"/>
 				<label for="showTotallist" style="cursor:pointer"><input id="showTotallist" type="checkbox" checked="true" onClick="updateDivVisible()" style="cursor:pointer">TotalList</label>
 				<label for="showPlaylist" style="cursor:pointer"><input id="showPlaylist" type="checkbox" onClick="updateDivVisible()" style="cursor:pointer">PlayList</label>
 				<label for="showPlaylistItems" style="cursor:pointer"><input id="showPlaylistItems" type="checkbox" onClick="updateDivVisible()" style="cursor:pointer">PlayListItems</label>
