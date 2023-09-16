@@ -2184,6 +2184,7 @@ function init() {
 			}
 		}
 	});
+/*
 	const urlParameter = window.location.search;
 	const urlParams = new URLSearchParams(urlParameter);
 	const importStr = urlParams.get('a');
@@ -2208,6 +2209,7 @@ function init() {
 		localStorage.setItem("watamePlayer_Volumes", JSON.stringify(importData["individualVolumeData"]))
 		localStorage.setItem("watamePlayer_settings", JSON.stringify(importData["settings"]))
 	}
+*/
 	readData()
 	//alert(navigator.userAgent)
 	//alert(isMobile.any() != null)
@@ -4907,19 +4909,20 @@ function exportList() {
 	exportData["playListData"] = playList_getJson()
 	exportData["individualVolumeData"] = volume_getJson()
 	exportData["settings"] = settings_getJson()
-	const DataStr = JSON.stringify(exportData)
-	const encoder = new TextEncoder();
-	const DataBinary = encoder.encode(DataStr);
-	const DataBinaryStr = ArrayToString(DataBinary);
-	const exportStr = base64UrlEncode(DataBinaryStr);
+	exportimportDialogEdit.value = JSON.stringify(exportData)
+	//const DataStr = JSON.stringify(exportData)
+	//const encoder = new TextEncoder();
+	//const DataBinary = encoder.encode(DataStr);
+	//const DataBinaryStr = ArrayToString(DataBinary);
+	//const exportStr = base64UrlEncode(DataBinaryStr);
 	// const RevexportStr = base64UrlDecode(exportStr);
 	// const ReverseDataBinary = StringToArray(RevexportStr);
 	// const decoder = new TextDecoder();
 	// const ReverseDataStr = decoder.decode(ReverseDataBinary);
 	
-	const url = window.location.origin + window.location.pathname + '?a=' + exportStr;
+	//const url = window.location.origin + window.location.pathname + '?a=' + exportStr;
 	//window.history.pushState({}, null, '?a=' + exportStr)
-	exportimportDialogEdit.value = url
+	//exportimportDialogEdit.value = url
 	exportimportDialog.onclose = function() {
 		if (exportimportDialog.returnValue == 'ok') {
 		}
@@ -4966,6 +4969,7 @@ function importList() {
 		<div style="max-width:100%;max-height:100%;display:flex;flex-direction:column;">
 			<div style="flex:none">
 				<input type="button" onClick="exportList()" value="Export"/>
+				<input type="button" onClick="importList()" value="Import"/>
 				<label for="showTotallist" style="cursor:pointer"><input id="showTotallist" type="checkbox" checked="true" onClick="updateDivVisible()" style="cursor:pointer">TotalList</label>
 				<label for="showPlaylist" style="cursor:pointer"><input id="showPlaylist" type="checkbox" onClick="updateDivVisible()" style="cursor:pointer">PlayList</label>
 				<label for="showPlaylistItems" style="cursor:pointer"><input id="showPlaylistItems" type="checkbox" onClick="updateDivVisible()" style="cursor:pointer">PlayListItems</label>
