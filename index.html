@@ -3780,7 +3780,17 @@ function onPlayerReady(event) {
 	volumeControl_update(player_getVolume())
 	refreshControlPanel()
 }
+var ReservedStartTime = undefined;
+var ReservedVolume = undefined;
 function onPlayerStateChange(event) {
+	//console.log(event.data)
+	if (event.data == 1 && ReservedStartTime != undefined)
+	{
+		player.seekTo(ReservedStartTime, true);
+		player.setVolume(ReservedVolume)
+		ReservedStartTime = undefined
+		ReservedVolume = undefined
+	}
 	if (event.data === YT.PlayerState.ENDED && changingCounter == 0){
 		++changingCounter
 		setTimeout((e) => {
@@ -3807,6 +3817,17 @@ async function playVideo(id, start, end) {
 			'startSeconds': start,
 			'endSeconds': end,
 		});
+		ReservedStartTime = start
+		ReservedVolume = player_getVolume()
+		player.setVolume(0)
+		// while (true)
+		// {
+		// 	const state = player_getPlayerState();
+		// 	if (state == YT.PlayerState.PLAYING || state == YT.PlayerState.PAUSED) {
+		// 		player.seekTo(value, true);
+		// 		break;
+		// 	}
+		// }
 	}
 	loadingVolume = undefined
 }
