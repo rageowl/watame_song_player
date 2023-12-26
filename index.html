@@ -3663,7 +3663,12 @@ function playVideoData(data) {
 			}
 			if (state == YT.PlayerState.PLAYING || state == YT.PlayerState.PAUSED) {
 				if (!videoControl.isChanging) {
-					videoControl.value = player.getCurrentTime()
+					let currenTime = player.getCurrentTime()
+					videoControl.value = currenTime
+					if (endtime < currenTime)
+					{
+						player.stopVideo()
+					}
 				}
 				if (!volumeControl.isChanging) {
 					volumeControl_update(player_getVolume())
