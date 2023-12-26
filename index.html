@@ -3817,18 +3817,10 @@ async function playVideo(id, start, end) {
 			'startSeconds': start,
 			'endSeconds': end,
 		});
-		ReservedStartTime = start
-		ReservedVolume = player_getVolume()
-		player.setVolume(0)
-		// while (true)
-		// {
-		// 	const state = player_getPlayerState();
-		// 	if (state == YT.PlayerState.PLAYING || state == YT.PlayerState.PAUSED) {
-		// 		player.seekTo(value, true);
-		// 		break;
-		// 	}
-		// }
 	}
+	ReservedStartTime = start
+	ReservedVolume = player_getVolume()
+	player.setVolume(0)
 	loadingVolume = undefined
 }
 function onFinishVideo() {
