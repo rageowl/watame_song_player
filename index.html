@@ -3674,11 +3674,12 @@ function playVideoData(data) {
 					}
 				}
 				if (!volumeControl.isChanging) {
+					let CurrentVolume = player_getVolume();
 					if (ReservedVolume == undefined)
 					{
-						volumeControl_update(player_getVolume())
+						volumeControl_update(CurrentVolume)
 					}
-					else if (ReservedVolume != player.getVolume())
+					else if (ReservedVolume != CurrentVolume)
 					{
 						player.setVolume(ReservedVolume)
 					}
