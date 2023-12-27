@@ -3083,7 +3083,6 @@ function playList_load(data) {
 	return item
 }
 function refreshControlPanel() {
-	volumeControl_update(player_getVolume())
 	const sufflePlayList = currentViewContext ? currentViewContext.shuffled : false
 	suffleIcon.style.opacity = sufflePlayList ? 1 : .4
 	suffleButton.title = sufflePlayList ? 'shuffled' : 'not shuffled'
@@ -3614,6 +3613,7 @@ var ReservedStartTime = undefined;
 var ReservedVolume = undefined;
 let playCounter = 0
 function playVideoData(data) {
+	volumeControl_update(player_getVolume())
 	if (!data) {
 		common_stopVideo()
 		return
