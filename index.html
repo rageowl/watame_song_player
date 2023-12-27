@@ -3806,7 +3806,7 @@ function onPlayerStateChange(event) {
 	if (event.data == 1 && ReservedStartTime != undefined)
 	{
 		player.seekTo(ReservedStartTime, true);
-		player.setVolume(ReservedVolume)
+		//player.setVolume(ReservedVolume)
 		ReservedStartTime = undefined
 	}
 	if (event.data === YT.PlayerState.ENDED && changingCounter == 0){
@@ -3835,7 +3835,7 @@ function playVideo(id, start, end, volume) {
 			'endSeconds': end,
 		});
 	}
-	//ReservedStartTime = start
+	ReservedStartTime = start
 	//ReservedVolume = volume
 	//player.setVolume(0)
 }
