@@ -3429,7 +3429,11 @@ function common_stopVideo(refresh = true) {
 }
 let loadingVolume = undefined
 function player_getVolume() {
-	return loadingVolume ? loadingVolume : playerLoaded ? player.getVolume() : 100
+	return loadingVolume != undefined
+		? loadingVolume
+		: playerLoaded
+			? player.getVolume()
+			: 100
 }
 function getLink(value) {
 	let start = getSeconds(value.start, 0)
