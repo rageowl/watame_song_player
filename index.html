@@ -3609,6 +3609,9 @@ function playContext_playOrOpen_r(ctx, doPlay) {
 	}
 	return true
 }
+
+var ReservedStartTime = undefined;
+var ReservedVolume = undefined;
 let playCounter = 0
 function playVideoData(data) {
 	if (!data) {
@@ -3667,10 +3670,10 @@ function playVideoData(data) {
 					videoControl.value = currenTime
 					if (endtime < currenTime)
 					{
-						player.stopVideo()
+						onFinishVideo()
 					}
 				}
-				if (!volumeControl.isChanging) {
+				if (!volumeControl.isChanging && ReservedVolume == undefined) {
 					volumeControl_update(player_getVolume())
 				}
 			}
@@ -3785,8 +3788,6 @@ function onPlayerReady(event) {
 	volumeControl_update(player_getVolume())
 	refreshControlPanel()
 }
-var ReservedStartTime = undefined;
-var ReservedVolume = undefined;
 function onPlayerStateChange(event) {
 	//console.log(event.data)
 	if (event.data == 1 && ReservedStartTime != undefined)
@@ -3824,7 +3825,7 @@ async function playVideo(id, start, end) {
 		});
 	}
 	ReservedStartTime = start
-	ReservedVolume = player_getVolume()
+	ReservedVolume = loadingVolume
 	player.setVolume(0)
 	loadingVolume = undefined
 }
