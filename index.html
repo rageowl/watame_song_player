@@ -3682,7 +3682,7 @@ function playVideoData(data) {
 	}, 100)
 	
 	if (!data.restricted) {
-		playVideo(data.ID, startTime, endtime)
+		playVideo(data.ID, startTime, endtime, volume)
 		videoControl.min = startTime
 		if (endtime != -1) {
 			videoControl.max = endtime
@@ -3810,8 +3810,8 @@ function onPlayerStateChange(event) {
 function onError(event) {
 	console.log(event)
 }
-async function playVideo(id, start, end) {
-	loadingVolume = player.getVolume()
+async function playVideo(id, start, end, volume) {
+	loadingVolume = volume
 	if (end < 0) {
 		await player.loadVideoById({
 				'videoId': id,
