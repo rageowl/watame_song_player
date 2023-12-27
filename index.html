@@ -3427,11 +3427,8 @@ function common_stopVideo(refresh = true) {
 	}
 	common_pauseVideo(refresh)
 }
-let loadingVolume = undefined
 function player_getVolume() {
-	return loadingVolume != undefined
-		? loadingVolume
-		: playerLoaded
+	return playerLoaded
 			? player.getVolume()
 			: 100
 }
@@ -3825,24 +3822,22 @@ function onPlayerStateChange(event) {
 function onError(event) {
 	console.log(event)
 }
-async function playVideo(id, start, end, volume) {
-	loadingVolume = volume
+function playVideo(id, start, end, volume) {
 	if (end < 0) {
-		await player.loadVideoById({
+		player.loadVideoById({
 				'videoId': id,
 				'startSeconds': start,
 		});
 	} else {
-		await player.loadVideoById({
+		player.loadVideoById({
 			'videoId': id,
 			'startSeconds': start,
 			'endSeconds': end,
 		});
 	}
-	ReservedStartTime = start
-	ReservedVolume = loadingVolume
-	player.setVolume(0)
-	loadingVolume = undefined
+	//ReservedStartTime = start
+	//ReservedVolume = volume
+	//player.setVolume(0)
 }
 function onFinishVideo() {
 	playListItems_next(true)
