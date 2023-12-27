@@ -3673,8 +3673,19 @@ function playVideoData(data) {
 						onFinishVideo()
 					}
 				}
-				if (!volumeControl.isChanging && ReservedVolume == undefined) {
-					volumeControl_update(player_getVolume())
+				if (!volumeControl.isChanging) {
+					if (ReservedVolume == undefined)
+					{
+						volumeControl_update(player_getVolume())
+					}
+					else if (ReservedVolume != player.getVolume())
+					{
+						player.setVolume(ReservedVolume)
+					}
+					else
+					{
+						ReservedVolume = undefined;
+					}
 				}
 			}
 		}
@@ -3795,7 +3806,6 @@ function onPlayerStateChange(event) {
 		player.seekTo(ReservedStartTime, true);
 		player.setVolume(ReservedVolume)
 		ReservedStartTime = undefined
-		ReservedVolume = undefined
 	}
 	if (event.data === YT.PlayerState.ENDED && changingCounter == 0){
 		++changingCounter
