@@ -4541,6 +4541,11 @@ function playListItems_next(videoFinished) {
 	if (state == YT.PlayerState.BUFFERING) {
 		return
 	}
+	if (playContextStack.length == 0)
+	{
+		player.stopVideo();
+		return;
+	}
 	while (playContextStack.length != 0) {
 		const isLast = playContextStack.length == 1
 		var ctx = playContextStack[playContextStack.length - 1]
