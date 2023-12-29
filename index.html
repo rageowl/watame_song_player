@@ -3837,6 +3837,10 @@ function playVideo(id, start, end, volume) {
 	}
 	ReservedStartTime = start
 	ReservedVolume = volume
+	if (ReservedVolume < 0)
+	{
+		ReservedVolume = 0;
+	}
 	player.setVolume(0)
 }
 function onFinishVideo() {
