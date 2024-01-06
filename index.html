@@ -3631,6 +3631,7 @@ function playVideoData(data) {
 	}
 	
 	let volume = Number(volumeControl.value)
+	console.log('volumeControl:' + volume)
 	let relVolume = individualVolumeMap.get(data.key)
 	if (relVolume != undefined) {
 		volume += relVolume
