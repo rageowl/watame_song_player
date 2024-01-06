@@ -3616,7 +3616,6 @@ function playContext_playOrOpen_r(ctx, doPlay) {
 var ReservedStartTime = undefined;
 let playCounter = 0
 function playVideoData(data) {
-	volumeControl_update(player_getVolume())
 	if (!data) {
 		common_stopVideo()
 		return
