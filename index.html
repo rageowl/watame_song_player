@@ -3671,8 +3671,9 @@ function playVideoData(data) {
 				if (!videoControl.isChanging) {
 					let currenTime = player.getCurrentTime()
 					videoControl.value = currenTime
-					if (endtime < currenTime)
+					if (ReservedVolume == undefined && endtime < currenTime)
 					{
+						console.log('OnInterval.FinishVideo')
 						onFinishVideo()
 					}
 				}
