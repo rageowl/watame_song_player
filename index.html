@@ -2550,12 +2550,12 @@ function init() {
 			totalList_playVideo(videoClipTable.selectedDataIndex)
 		}
 
-		let itemSearchByVideoId = totalListContextMenu.addItem()
-		itemSearchByVideoId.setElements('Search in PlayList')
-		itemSearchByVideoId.onclick = function() {
-			playListTable_SearchByClipKey(videoClipTable.getDataByKey(videoClipTable.selectedDataKey).key)
+		let itemSearch = totalListContextMenu.addItem()
+		itemSearch.setElements('Search for Playlists Containing Item')
+		itemSearch.onclick = function() {
 			showPlaylist.checked = true
 			updateDivVisible()
+			playListTable_SearchByItemKey(videoClipTable.getDataByKey(videoClipTable.selectedDataKey).key)
 		}
 	}
 	{
@@ -2567,6 +2567,12 @@ function init() {
 		itemSelect.setElements('Select')
 		itemSelect.onclick = function() {
 			playList_open(playListTable.getDataByKey(playListTable.selectedDataKey))
+		}
+		let itemSearch = playListContextMenu.addItem()
+		itemSearch.setElements('Search for Playlists Containing Item')
+		itemSearch.onclick = function() {
+			let data = playListTable.getDataByKey(playListTable.selectedDataKey)
+			playListTable_SearchByItemKey(data.key)
 		}
 		let itemEdit = playListContextMenu.addItem()
 		itemEdit.setElements('Edit')
@@ -2644,6 +2650,38 @@ function init() {
 		itemOpen.setElements('Open')
 		itemOpen.onclick = function() {
 			playListItemsTable_playOrOpen(playListItemsTable.selectedDataKey, false)
+		}
+		let itemSearch = playListItemsContextMenu.addItem()
+		itemSearch.setElements('Search for Playlists Containing Item')
+		itemSearch.onclick = function() {
+			let data = playListItemsTable.getDataByKey(playListItemsTable.selectedDataKey).data
+			showPlaylist.checked = true
+			updateDivVisible()
+			playListTable_SearchByItemKey(data.key)
+		}
+		let itemSelect = playListItemsContextMenu.addItem()
+		itemSelect.setElements('Select')
+		itemSelect.onclick = function() {
+			let data = playListItemsTable.getDataByKey(playListItemsTable.selectedDataKey).data
+			if (data.type == 1)
+			{
+				showTotallist.checked = true
+			}
+			else if (data.type == 2)
+			{
+				showPlaylist.checked = true
+			}
+			updateDivVisible()
+			if (data.type == 1)
+			{
+				videoClipTable.scrollToRowByDataKey(data.key, true)
+				videoClipTable.selectedDataKey = data.key
+			}
+			else if (data.type == 2)
+			{
+				playListTable.scrollToRowByDataKey(data.key, true)
+				playListTable.selectedDataKey = data.key
+			}
 		}
 		let itemDelete = playListItemsContextMenu.addItem()
 		itemDelete.setElements('Delete')
@@ -4737,16 +4775,16 @@ function playListTable_Search() {
 	}
 	playListTable.scrollToRowByDataKey(playListTable.selectedDataKey, true)
 }
-function playListTable_SearchByClipKey(clipKey) {
-    if (!clipKey) {
-        console.error("No clipKey ID provided");
+function playListTable_SearchByItemKey(searchItemKey) {
+    if (!searchItemKey) {
+        console.error("No itemKey ID provided");
         return;
     }
 
     playListTable.filterFunction = function(data) {
         for (let i = 0; i < data.items.length; i++) {
-            let itemClipKey = data.items[i].data.key;
-            if (itemClipKey === clipKey) {
+            let itemKey = data.items[i].data.key;
+            if (itemKey === searchItemKey) {
                 return true;
             }
         }
