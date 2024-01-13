@@ -3613,7 +3613,8 @@ function playContext_playOrOpen_r(ctx, doPlay) {
 	return true
 }
 
-var ReservedStartTime = undefined;
+let ReservedStartTime = undefined;
+let LastVideoTime = 0
 let playCounter = 0
 function playVideoData(data) {
 	if (!data) {
@@ -3682,15 +3683,29 @@ function playVideoData(data) {
 						}
 						else
 						{
+							console.log('OnInterval.setVolume' + ';currenTime:' + currenTime)
 							player.setVolume(ReservedVolume)
 							ReservedStartTime = undefined
 							ReservedVolume = undefined;
+							LastVideoTime = currenTime
 						}
 					}
-					else if (endtime < currenTime)
+					else
 					{
-						console.log('OnInterval.FinishVideo')
-						onFinishVideo()
+						let diff = Math.abs(LastVideoTime - currenTime)
+						if (diff > 1)
+						{
+							player.seekTo(LastVideoTime, true);
+						}
+						else if (endtime < currenTime)
+						{
+							console.log('OnInterval.FinishVideo' + ';currenTime:' + currenTime + ';endtime:' + endtime)
+							onFinishVideo()
+						}
+						else
+						{
+							LastVideoTime = currenTime;
+						}
 					}
 				}
 				if (!volumeControl.isChanging) {
@@ -4802,6 +4817,7 @@ function videoControl_onchange(value) {
 	const state = player_getPlayerState()
 	if (state == YT.PlayerState.PLAYING || state == YT.PlayerState.PAUSED) {
 		player.seekTo(value, true)
+		LastVideoTime = value
 	}
 	videoControl.isChanging = false
 	//console.log('changed:'+value)
