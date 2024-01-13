@@ -3694,6 +3694,35 @@ function playVideoData(data) {
 	let endtime = getSeconds(data.end, -1)
 	let playingKey = ++playCounter
 	let beginTime = Date.now()
+	
+	if (!data.restricted) {
+		playVideo(data.ID, startTime, endtime, volume)
+		videoControl.min = startTime
+		if (endtime != -1) {
+			videoControl.max = endtime
+		} else {
+			videoControl.max = startTime + 10
+		}
+		videoControl.value = 0
+	} else {
+		player.stopVideo()
+		popupWnd = openWindow(data)
+		if (popupWnd == null) {
+			onFinishVideo()
+			return
+		}
+		videoControl.min = startTime
+		if (endtime != -1) {
+			videoControl.max = endtime + 10
+		} else {
+			videoControl.max = startTime + 10
+		}
+		videoControl.value = 0
+	}
+	refreshControlPanel()
+	playListTable.updateList()
+	playListItemsTable.updateList()
+
 	interval = setInterval(function() {
 		if (popupWnd) {
 			let curTime = Date.now()
@@ -3766,33 +3795,6 @@ function playVideoData(data) {
 		refreshPlayButton()
 	}, 100)
 	
-	if (!data.restricted) {
-		playVideo(data.ID, startTime, endtime, volume)
-		videoControl.min = startTime
-		if (endtime != -1) {
-			videoControl.max = endtime
-		} else {
-			videoControl.max = startTime + 10
-		}
-		videoControl.value = 0
-	} else {
-		player.stopVideo()
-		popupWnd = openWindow(data)
-		if (popupWnd == null) {
-			onFinishVideo()
-			return
-		}
-		videoControl.min = startTime
-		if (endtime != -1) {
-			videoControl.max = endtime + 10
-		} else {
-			videoControl.max = startTime + 10
-		}
-		videoControl.value = 0
-	}
-	refreshControlPanel()
-	playListTable.updateList()
-	playListItemsTable.updateList()
 	/*
 	let url = ["https://www.youtube.com/embed/", value.ID, "?start=", getSeconds(value.start, 0), "&autoplay=1"]
 	let endtime = getSeconds(value.end, -1)
@@ -4901,6 +4903,7 @@ function individualVolume_save(key, relVolume) {
 	const curVolume = individualVolumeMap.get(key)
 	if (curVolume != relVolume) {
 		individualVolumeMap.set(key, relVolume)
+		console.log('individualVolume_save' + ';key:' + key + ';relVolume:' + relVolume)
 		volume_save()
 	}
 }
