@@ -3761,7 +3761,6 @@ function playVideoData(data) {
 							console.log('OnInterval.setVolume' + ';currenTime:' + currenTime)
 							player.setVolume(ReservedVolume)
 							ReservedStartTime = undefined
-							ReservedVolume = undefined;
 							LastVideoTime = currenTime
 						}
 					}
@@ -3788,6 +3787,14 @@ function playVideoData(data) {
 					if (ReservedVolume == undefined)
 					{
 						volumeControl_update(CurrentVolume)
+					}
+					else if (ReservedVolume != CurrentVolume)
+					{
+						player.setVolume(ReservedVolume)
+					}
+					else
+					{
+						ReservedVolume = undefined;
 					}
 				}
 			}
