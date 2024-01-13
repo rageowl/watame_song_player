@@ -3663,15 +3663,31 @@ function playVideoData(data) {
 			}
 		} else {
 			let state = player_getPlayerState()
-			if (endtime == -1 && state == YT.PlayerState.PLAYING) {
+			if (endtime == -1 && state == YT.PlayerState.PLAYING)
+			{
 				endtime = player.getDuration()
 				videoControl.max = endtime
 			}
-			if (state == YT.PlayerState.PLAYING || state == YT.PlayerState.PAUSED) {
+			if (state == YT.PlayerState.PLAYING || state == YT.PlayerState.PAUSED)
+			{
 				if (!videoControl.isChanging) {
 					let currenTime = player.getCurrentTime()
 					videoControl.value = currenTime
-					if (ReservedVolume == undefined && endtime < currenTime)
+					if (ReservedStartTime != undefined)
+					{
+						let diff = Math.abs(currenTime - ReservedStartTime);
+						if (diff > 1)
+						{
+							player.seekTo(ReservedStartTime, true);
+						}
+						else
+						{
+							player.setVolume(ReservedVolume)
+							ReservedStartTime = undefined
+							ReservedVolume = undefined;
+						}
+					}
+					else if (endtime < currenTime)
 					{
 						console.log('OnInterval.FinishVideo')
 						onFinishVideo()
@@ -3682,14 +3698,6 @@ function playVideoData(data) {
 					if (ReservedVolume == undefined)
 					{
 						volumeControl_update(CurrentVolume)
-					}
-					else if (ReservedVolume != CurrentVolume)
-					{
-						player.setVolume(ReservedVolume)
-					}
-					else
-					{
-						ReservedVolume = undefined;
 					}
 				}
 			}
@@ -3806,12 +3814,6 @@ function onPlayerReady(event) {
 }
 function onPlayerStateChange(event) {
 	//console.log(event.data)
-	if (event.data == 1 && ReservedStartTime != undefined)
-	{
-		player.seekTo(ReservedStartTime, true);
-		player.setVolume(ReservedVolume)
-		ReservedStartTime = undefined
-	}
 	if (event.data === YT.PlayerState.ENDED && changingCounter == 0){
 		++changingCounter
 		setTimeout((e) => {
