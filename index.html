@@ -2549,6 +2549,14 @@ function init() {
 		itemPlay.onclick = function() {
 			totalList_playVideo(videoClipTable.selectedDataIndex)
 		}
+
+		let itemSearchByVideoId = totalListContextMenu.addItem()
+		itemSearchByVideoId.setElements('Search in PlayList')
+		itemSearchByVideoId.onclick = function() {
+			playListTable_SearchByClipKey(videoClipTable.getDataByKey(videoClipTable.selectedDataKey).key)
+			showPlaylist.checked = true
+			updateDivVisible()
+		}
 	}
 	{
 		playListContextMenu = new PopupMenu()
@@ -3638,7 +3646,7 @@ function playVideoData(data) {
 		volume += relVolume
 	}
 	if (player_getVolume() != volume) {
-		console.log('setVolume:' + volume)
+		console.log('setVolume:' + volume + ';relVolume:' + relVolume)
 		player.setVolume(volume)
 	}
 	
@@ -4728,6 +4736,24 @@ function playListTable_Search() {
 		}
 	}
 	playListTable.scrollToRowByDataKey(playListTable.selectedDataKey, true)
+}
+function playListTable_SearchByClipKey(clipKey) {
+    if (!clipKey) {
+        console.error("No clipKey ID provided");
+        return;
+    }
+
+    playListTable.filterFunction = function(data) {
+        for (let i = 0; i < data.items.length; i++) {
+            let itemClipKey = data.items[i].data.key;
+            if (itemClipKey === clipKey) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    playListTable.updateList();
 }
 function playListItemsTable_Search() {
 	let keyWord = playListItemsButton_search.value
