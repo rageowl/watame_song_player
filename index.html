@@ -3783,18 +3783,21 @@ function playVideoData(data) {
 					}
 				}
 				if (!volumeControl.isChanging) {
-					let CurrentVolume = player.getVolume();
-					if (ReservedVolume == undefined)
+					if (ReservedStartTime == undefined)
 					{
-						volumeControl_update(CurrentVolume)
-					}
-					else if (ReservedVolume != CurrentVolume)
-					{
-						player.setVolume(ReservedVolume)
-					}
-					else
-					{
-						ReservedVolume = undefined;
+						let CurrentVolume = player.getVolume();
+						if (ReservedVolume == undefined)
+						{
+							volumeControl_update(CurrentVolume)
+						}
+						else if (ReservedVolume != CurrentVolume)
+						{
+							player.setVolume(ReservedVolume)
+						}
+						else
+						{
+							ReservedVolume = undefined;
+						}
 					}
 				}
 			}
