@@ -3678,18 +3678,18 @@ function playVideoData(data) {
 	}
 	
 	let volume = Number(volumeControl.value)
-	console.log('volumeControl:' + volume)
+	//console.log('volumeControl:' + volume)
 	let relVolume = individualVolumeMap.get(data.key)
 	if (relVolume != undefined) {
 		volume += relVolume
 	}
 	if (player_getVolume() != volume) {
-		console.log('setVolume:' + volume + ';relVolume:' + relVolume)
+		//console.log('setVolume:' + volume + ';relVolume:' + relVolume)
 		player.setVolume(volume)
 	}
 	
 	currentVideoClip = data
-	//console.log(currentVideoClip)
+	console.log('playVideoData: ' + currentVideoClip.title)
 	let startTime = getSeconds(data.start, 0)
 	let endtime = getSeconds(data.end, -1)
 	let playingKey = ++playCounter
@@ -3758,7 +3758,7 @@ function playVideoData(data) {
 						}
 						else
 						{
-							console.log('OnInterval.setVolume' + ';currenTime:' + currenTime)
+							//console.log('OnInterval.setVolume' + ';currenTime:' + currenTime)
 							player.setVolume(ReservedVolume)
 							ReservedStartTime = undefined
 							LastVideoTime = currenTime
@@ -3773,7 +3773,8 @@ function playVideoData(data) {
 						}
 						else if (endtime < currenTime)
 						{
-							console.log('OnInterval.FinishVideo' + ';currenTime:' + currenTime + ';endtime:' + endtime)
+							//console.log('OnInterval.FinishVideo' + ';currenTime:' + currenTime + ';endtime:' + endtime)
+							console.log('OnInterval.FinishVideo: ' + currentVideoClip.title)
 							onFinishVideo()
 						}
 						else
