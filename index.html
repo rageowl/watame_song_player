@@ -3689,7 +3689,7 @@ function playVideoData(data) {
 	}
 	
 	currentVideoClip = data
-	console.log('playVideoData: ' + currentVideoClip.title)
+	console.log('playVideoData: ' + currentVideoClip.key)
 	let startTime = getSeconds(data.start, 0)
 	let endtime = getSeconds(data.end, -1)
 	let playingKey = ++playCounter
@@ -3774,7 +3774,7 @@ function playVideoData(data) {
 						else if (endtime < currenTime)
 						{
 							//console.log('OnInterval.FinishVideo' + ';currenTime:' + currenTime + ';endtime:' + endtime)
-							console.log('OnInterval.FinishVideo: ' + currentVideoClip.title)
+							console.log('OnInterval.FinishVideo: ' + currentVideoClip.key)
 							onFinishVideo()
 						}
 						else
