@@ -3915,13 +3915,14 @@ function playVideo(id, start, end, volume) {
 	}
 	player.setVolume(0)
 }
-let NumExecFinishVideo = 0;
+let LastExecFinishVideoTime = 0;
 function onFinishVideo() {
-	if (++NumExecFinishVideo == 1)
+	let CurTime = Date.now()
+	if (CurTime - LastExecFinishVideoTime > 1000)
 	{
 		playListItems_next(true)
+		LastExecFinishVideoTime = CurTime
 	}
-	--NumExecFinishVideo;
 }
 function shuffle(array, start, end) {
 	start = isUndefined(start, 0)
