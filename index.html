@@ -3273,7 +3273,7 @@ function playList_insertItem(playList, data, atDataKey=null, front=false) {
 	let item = { key:newKey, playList:playList, data:data, shufflePriority:0 }
 	++data.refCount
 
-	if (currentViewContext.data == playList) {
+	if (currentViewContext.data == dList) {
 		let ctx = currentViewContext
 		const playOrder = ctx.playOrder
 		const playOrderMap = ctx.playOrderMap
@@ -3688,11 +3688,11 @@ function playVideoData(data) {
 	}
 	
 	currentVideoClip = data
-	console.log('playVideoData: ' + currentVideoClip.key)
+	let beginTime = Date.now()
+	console.log('[' + beginTime + ']playVideoData: ' + currentVideoClip.key)
 	let startTime = getSeconds(data.start, 0)
 	let endtime = getSeconds(data.end, -1)
 	let playingKey = ++playCounter
-	let beginTime = Date.now()
 	
 	if (!data.restricted) {
 		playVideo(data.ID, startTime, endtime, volume)
@@ -3918,7 +3918,7 @@ function playVideo(id, start, end, volume) {
 let LastExecFinishVideoTime = 0;
 function onFinishVideo(bForce) {
 	let CurTime = Date.now()
-	if (bForce || CurTime - LastExecFinishVideoTime > 1000)
+	if (bForce || CurTime - LastExecFinishVideoTime > 2000)
 	{
 		playListItems_next(true)
 		LastExecFinishVideoTime = CurTime
