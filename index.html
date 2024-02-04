@@ -3707,7 +3707,7 @@ function playVideoData(data) {
 		player.stopVideo()
 		popupWnd = openWindow(data)
 		if (popupWnd == null) {
-			onFinishVideo()
+			onFinishVideo(false)
 			return
 		}
 		videoControl.min = startTime
@@ -3728,13 +3728,13 @@ function playVideoData(data) {
 			if (endtime >= 0) {
 				let restMilliseconds = (beginTime + (endtime - startTime + 10) * 1000) - curTime
 				if (restMilliseconds <= 0 && !popupWnd.closed && playingKey == playCounter) {
-					onFinishVideo()
+					onFinishVideo(false)
 				}
 				let value = (curTime - beginTime) / 1000 + startTime
 				videoControl.value = value
 			}
 			if ((curTime - beginTime) > 5000 && popupWnd && popupWnd.closed && playingKey == playCounter) {
-				onFinishVideo()
+				onFinishVideo(false)
 			}
 		} else {
 			let state = player_getPlayerState()
@@ -3774,7 +3774,7 @@ function playVideoData(data) {
 						{
 							//console.log('OnInterval.FinishVideo' + ';currenTime:' + currenTime + ';endtime:' + endtime)
 							console.log('OnInterval.FinishVideo: ' + currentVideoClip.key)
-							onFinishVideo()
+							onFinishVideo(false)
 						}
 						else
 						{
@@ -3888,7 +3888,7 @@ function onPlayerReady(event) {
 function onPlayerStateChange(event) {
 	//console.log(event.data)
 	if (event.data === YT.PlayerState.ENDED){
-		onFinishVideo()
+		onFinishVideo(false)
 	}
 }
 function onError(event) {
@@ -3916,9 +3916,9 @@ function playVideo(id, start, end, volume) {
 	player.setVolume(0)
 }
 let LastExecFinishVideoTime = 0;
-function onFinishVideo() {
+function onFinishVideo(bForce) {
 	let CurTime = Date.now()
-	if (CurTime - LastExecFinishVideoTime > 1000)
+	if (bForce || CurTime - LastExecFinishVideoTime > 1000)
 	{
 		playListItems_next(true)
 		LastExecFinishVideoTime = CurTime
