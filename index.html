@@ -3918,10 +3918,10 @@ function playVideo(id, start, end, volume) {
 let LastExecFinishVideoTime = 0;
 function onFinishVideo(bForce) {
 	let CurTime = Date.now()
-	if (bForce || CurTime - LastExecFinishVideoTime > 2000)
+	if (bForce || CurTime - LastExecFinishVideoTime > 1000)
 	{
-		playListItems_next(true)
 		LastExecFinishVideoTime = CurTime
+		playListItems_next(true)
 	}
 }
 function shuffle(array, start, end) {
