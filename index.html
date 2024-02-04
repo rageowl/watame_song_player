@@ -1862,7 +1862,6 @@ class MultiColumnList {
 }
 		</script>
 		<script type="text/javascript" charset="utf-8">
-let changingCounter = 0
 let popupWnd = null
 let playerLoaded = false
 let videoClipMap = new Map()
@@ -3888,16 +3887,8 @@ function onPlayerReady(event) {
 }
 function onPlayerStateChange(event) {
 	//console.log(event.data)
-	if (event.data === YT.PlayerState.ENDED && changingCounter == 0){
-		/*
-		++changingCounter
-		setTimeout((e) => {
-			onFinishVideo()
-		}, 500)
-		setTimeout((e) => {
-			--changingCounter
-		}, 2000);
-		*/
+	if (event.data === YT.PlayerState.ENDED){
+		onFinishVideo()
 	}
 }
 function onError(event) {
@@ -3924,8 +3915,13 @@ function playVideo(id, start, end, volume) {
 	}
 	player.setVolume(0)
 }
+let NumExecFinishVideo = 0;
 function onFinishVideo() {
-	playListItems_next(true)
+	if (++NumExecFinishVideo == 1)
+	{
+		playListItems_next(true)
+	}
+	--NumExecFinishVideo;
 }
 function shuffle(array, start, end) {
 	start = isUndefined(start, 0)
