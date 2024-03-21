@@ -3766,7 +3766,7 @@ function playVideoData(data) {
 					else
 					{
 						let diff = Math.abs(LastVideoTime - currenTime)
-						if (diff > 1.5)
+						if (diff > 1.5 && (curTime - beginTime) <= 10000)
 						{
 							player.seekTo(LastVideoTime, true);
 						}
