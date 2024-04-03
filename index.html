@@ -3327,7 +3327,7 @@ function playList_insertItem(playList, data, atDataKey=null, front=false) {
 	let item = { key:newKey, playList:playList, data:data, shufflePriority:0 }
 	++data.refCount
 
-	if (currentViewContext.data == dList) {
+	if (currentViewContext.data == playList) {
 		let ctx = currentViewContext
 		const playOrder = ctx.playOrder
 		const playOrderMap = ctx.playOrderMap
