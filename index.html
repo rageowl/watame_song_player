@@ -2556,6 +2556,20 @@ function init() {
 			updateDivVisible()
 			playListTable_SearchByItemKey(videoClipTable.getDataByKey(videoClipTable.selectedDataKey).key)
 		}
+
+		let itemCopyToClipboard = totalListContextMenu.addItem()
+		itemCopyToClipboard.setElements(createSpan('CopyToClipboard', 'flex:1;'), createSpan('>', 'flex:none;'))
+		let menuCopyToClipboard = itemCopyToClipboard.setSubMenu()
+
+		let headers = videoClipTable.headers;
+		for (let i = 0; i < headers.length; ++i) {
+			let headerName = headers[i].name;
+			let copyElement = menuCopyToClipboard.addItem();
+			copyElement.setElements(headerName);
+			copyElement.onclick = function() {
+				copySelectedItemsToClipboard(videoClipTable, [headerName]);
+			}	
+		}
 	}
 	{
 		playListContextMenu = new PopupMenu()
@@ -2633,6 +2647,20 @@ function init() {
 				data.entirePlay = false
 			})
 			playList_updateCheckboxes()
+		}
+
+		let itemCopyToClipboard = playListContextMenu.addItem()
+		itemCopyToClipboard.setElements(createSpan('CopyToClipboard', 'flex:1;'), createSpan('>', 'flex:none;'))
+		let menuCopyToClipboard = itemCopyToClipboard.setSubMenu()
+
+		let headers = playListTable.headers;
+		for (let i = 0; i < headers.length; ++i) {
+			let headerName = headers[i].name;
+			let copyElement = menuCopyToClipboard.addItem();
+			copyElement.setElements(headerName);
+			copyElement.onclick = function() {
+				copySelectedItemsToClipboard(playListTable, [headerName]);
+			}	
 		}
 	}
 	{
@@ -2910,6 +2938,20 @@ function init() {
 				}
 			})
 			playList_updateCheckboxes()
+		}
+		
+		let itemCopyToClipboard = playListItemsContextMenu.addItem()
+		itemCopyToClipboard.setElements(createSpan('CopyToClipboard', 'flex:1;'), createSpan('>', 'flex:none;'))
+		let menuCopyToClipboard = itemCopyToClipboard.setSubMenu()
+
+		let headers = playListItemsTable.headers;
+		for (let i = 0; i < headers.length; ++i) {
+			let headerName = headers[i].name;
+			let copyElement = menuCopyToClipboard.addItem();
+			copyElement.setElements(headerName);
+			copyElement.onclick = function() {
+				copySelectedItemsToClipboard(playListItemsTable, [headerName]);
+			}	
 		}
 		/*
 		let itemTest1 = playListItemsContextMenu.addItem()
@@ -3229,9 +3271,21 @@ function refreshControlPanel() {
 	}
 	refreshPlayButton()
 }
-function copySelectedItemsToClipboard(list) {
+function copySelectedItemsToClipboard(list, selectedColumnNames=null) {
 	let keys = list.selectedDataKeys
 	let headers = list.headers
+	if (selectedColumnNames) {
+		newHeaders = []
+		for (let i = 0; i < selectedColumnNames.length; ++i) {
+			for (let j = 0; j < headers.length; ++j) {
+				if (headers[j].name == selectedColumnNames[i]) {
+					newHeaders.push(headers[j]);
+					break;
+				}
+			}
+		}
+		headers = newHeaders;
+	}
 	let text = ''
 	for (let i = 0; i < keys.length; ++i) {
 		let key = keys[i]
@@ -3768,6 +3822,7 @@ function playVideoData(data) {
 						let diff = Math.abs(LastVideoTime - currenTime)
 						if (diff > 1.5 && (curTime - beginTime) <= 10000)
 						{
+							console.log('OnInterval.ForcedRefresh: ' + currentVideoClip.key)
 							player.seekTo(LastVideoTime, true);
 						}
 						else if (endtime < currenTime)
