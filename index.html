@@ -3837,7 +3837,7 @@ function playVideoData(data) {
 							console.log('OnInterval.ForcedRefresh: ' + currentVideoClip.key)
 							player.seekTo(LastVideoTime, true);
 						}
-						else if (playerEndTime < currenTime)
+						else if (playerEndTime >= 0 && playerEndTime < currenTime)
 						{
 							//console.log('OnInterval.FinishVideo' + ';currenTime:' + currenTime + ';endtime:' + endtime)
 							console.log('OnInterval.FinishVideo: ' + currentVideoClip.key)
