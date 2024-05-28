@@ -3497,6 +3497,14 @@ function getSeconds(value, defaultVal) {
 	}
 	return defaultVal
 }
+function secondsToTime(seconds)
+{
+	let hours = seconds / 3600
+	seconds -= hours * 3600
+	let minutes = seconds / 60
+	seconds -= minutes * 60
+	return `${fillCharacter(hours, 2, '0')}:${fillCharacter(minutes, 2, '0')}:${fillCharacter(seconds, 2, '0')}`
+}
 let interval = null
 function common_pauseVideo(refresh = true) {
 	playButton.innerText = '\u25b6'
@@ -3715,6 +3723,7 @@ function playContext_playOrOpen_r(ctx, doPlay) {
 let ReservedStartTime = undefined;
 let LastVideoTime = 0
 let playCounter = 0
+let playerEndTime = -1
 function playVideoData(data) {
 	if (!data) {
 		common_stopVideo()
@@ -3744,8 +3753,11 @@ function playVideoData(data) {
 	currentVideoClip = data
 	let beginTime = Date.now()
 	console.log('[' + beginTime + ']playVideoData: ' + currentVideoClip.key)
+	TestClipTime_Start.value = data.start
+	TestClipTime_End.value = data.end
 	let startTime = getSeconds(data.start, 0)
 	let endtime = getSeconds(data.end, -1)
+	playerEndTime = endTime
 	let playingKey = ++playCounter
 	
 	if (!data.restricted) {
@@ -3777,8 +3789,8 @@ function playVideoData(data) {
 	playListItemsTable.updateList()
 
 	interval = setInterval(function() {
+		curTime = Date.now()
 		if (popupWnd) {
-			let curTime = Date.now()
 			if (endtime >= 0) {
 				let restMilliseconds = (beginTime + (endtime - startTime + 10) * 1000) - curTime
 				if (restMilliseconds <= 0 && !popupWnd.closed && playingKey == playCounter) {
@@ -3825,7 +3837,7 @@ function playVideoData(data) {
 							console.log('OnInterval.ForcedRefresh: ' + currentVideoClip.key)
 							player.seekTo(LastVideoTime, true);
 						}
-						else if (endtime < currenTime)
+						else if (playerEndTime < currenTime)
 						{
 							//console.log('OnInterval.FinishVideo' + ';currenTime:' + currenTime + ';endtime:' + endtime)
 							console.log('OnInterval.FinishVideo: ' + currentVideoClip.key)
@@ -4122,6 +4134,7 @@ function updateDivVisible() {
 	divPlaylistPanel.style.display = showPlaylist.checked ? 'flex' : 'none'
 	divPlaylistItemsPanel.style.display = showPlaylistItems.checked ? 'flex' : 'none'
 	divClipSpreadSheet.style.display = showClipTableURL.checked ? 'flex' : 'none'
+	divTestClipTime.style.display = showTestClipTime.checked ? 'flex' : 'none'
 	//playListItemsTable.adjustScroll()
 }
 function playList_getJson() {
@@ -5154,6 +5167,32 @@ function importList() {
 		alert("The <dialog> API is not supported by this browser");
 	}
 }
+function TestClipTime_Start_onClick()
+{
+	let startTime = TestClipTime_Start.value
+	if (startTime.length == 0)
+	{
+		startTime = "00:00:00"
+	}
+	startTime = getSeconds(startTime);
+	videoControl_oninput(startTime);
+	videoControl_onchange(startTime);
+}
+function TestClipTime_End_onClick()
+{
+	let endTime = TestClipTime_End.value;
+	if (endTime.length == 0)
+	{
+		let currenTime = player.getCurrentTime();
+		endTime = secondsToTime(currenTime);
+		TestClipTime_End.value = endTime;
+	}
+	playerEndTime = getSeconds(endTime)
+	let restartTime = playerEndTime - 5;
+	videoControl_oninput(restartTime);
+	videoControl_onchange(restartTime);
+}
+
 		</script>
 	</head>
 	<body onload="init()">
@@ -5165,6 +5204,7 @@ function importList() {
 				<label for="showPlaylist" style="cursor:pointer"><input id="showPlaylist" type="checkbox" onClick="updateDivVisible()" style="cursor:pointer">PlayList</label>
 				<label for="showPlaylistItems" style="cursor:pointer"><input id="showPlaylistItems" type="checkbox" onClick="updateDivVisible()" style="cursor:pointer">PlayListItems</label>
 				<label for="showClipTableURL" style="cursor:pointer"><input id="showClipTableURL" type="checkbox" onClick="updateDivVisible()" style="cursor:pointer">ClipSpreadSheets</label>
+				<label for="showTestClipTime" style="cursor:pointer"><input id="showTestClipTime" type="checkbox" onClick="updateDivVisible()" style="cursor:pointer">TestClipTime</label>
 				[Manual Video <a href="https://www.youtube.com/watch?v=f6Nvl9tysug" target="_blank">KR</a> / <a href="https://www.youtube.com/watch?v=hi8T21HbMHA" target="_blank">JP</a>]
 			</div>
 			<div id="divClipSpreadSheet" style="flex:none;display:flex;flex-direction: column;">
@@ -5298,6 +5338,16 @@ function importList() {
 						<label id="currentOrder"></label>
 					</div>
 				</div>
+			</div>
+		</div>
+		<div id="divTestClipTime" style="display: flex; justify-content: flex-start; gap: 10px;">
+			<div class="set" style="display: flex; flex-direction: column; align-items: center;">
+				<input id="TestClipTime_Start" type="text" placeholder="Start Time" style="margin: 5px 0;">
+				<button style="margin: 5px 0;" onClick="TestClipTime_Start_onClick()">Test</button>
+			</div>
+			<div class="set" style="display: flex; flex-direction: column; align-items: center;">
+				<input id="TestClipTime_End" type="text" placeholder="End Time" style="margin: 5px 0;">
+				<button style="margin: 5px 0;" onClick="TestClipTime_End_onClick()">Test</button>
 			</div>
 		</div>
 		<script src="https://www.youtube.com/iframe_api"></script>
