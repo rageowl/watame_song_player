@@ -5149,7 +5149,7 @@ function exportList() {
 	let text = JSON.stringify(exportData)
 
 	const zip = new JSZip();
-	zip.file("sample.txt", text);
+	zip.file("sample.txt", text, { compression: "DEFLATE", compressionOptions: { level: 9 } });
 
 	zip.generateAsync({ type: "base64" })
 		.then(function (base64) {
