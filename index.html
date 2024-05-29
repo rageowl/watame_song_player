@@ -13,6 +13,7 @@ var settingsData = { clipSpreadSheetURL:defaultClipSpreadSheetURL }
 	<script type="text/javascript" charset="utf-8">
 let videoClipList = []
 	</script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
 	<style>
 		.tblWrap {
 			display:flex;
@@ -2099,14 +2100,32 @@ function readData()
 	let playListDataText = localStorage.getItem('watamePlayer_PlayList')
 	let individualVolumeDataText = localStorage.getItem('watamePlayer_Volumes')
 	if (playListDataText) {
-		playListData = JSON.parse(playListDataText)
+		try
+		{
+			playListData = JSON.parse(playListDataText)
+		}
+		catch (err)
+		{
+		}
 	}
 	if (individualVolumeDataText) {
-		individualVolumeData = JSON.parse(individualVolumeDataText)
+		try
+		{
+			individualVolumeData = JSON.parse(individualVolumeDataText)
+		}
+		catch (err)
+		{
+		}
 	}
 	let settingsDataText = localStorage.getItem('watamePlayer_settings')
 	if (settingsDataText) {
-		settingsData = JSON.parse(settingsDataText)
+		try
+		{
+			settingsData = JSON.parse(settingsDataText)
+		}
+		catch (err)
+		{
+		}
 		if (settingsData == null) {
 			settingsData = {}
 		}
@@ -5127,20 +5146,19 @@ function exportList() {
 	exportData["playListData"] = playList_getJson()
 	exportData["individualVolumeData"] = volume_getJson()
 	exportData["settings"] = settings_getJson()
-	exportimportDialogEdit.value = JSON.stringify(exportData)
-	//const DataStr = JSON.stringify(exportData)
-	//const encoder = new TextEncoder();
-	//const DataBinary = encoder.encode(DataStr);
-	//const DataBinaryStr = ArrayToString(DataBinary);
-	//const exportStr = base64UrlEncode(DataBinaryStr);
-	// const RevexportStr = base64UrlDecode(exportStr);
-	// const ReverseDataBinary = StringToArray(RevexportStr);
-	// const decoder = new TextDecoder();
-	// const ReverseDataStr = decoder.decode(ReverseDataBinary);
-	
-	//const url = window.location.origin + window.location.pathname + '?a=' + exportStr;
-	//window.history.pushState({}, null, '?a=' + exportStr)
-	//exportimportDialogEdit.value = url
+	let text = JSON.stringify(exportData)
+
+	const zip = new JSZip();
+	zip.file("sample.txt", text);
+
+	zip.generateAsync({ type: "base64" })
+		.then(function (base64) {
+			exportimportDialogEdit.value = JSON.stringify({ version: 1, data : base64 })
+		})
+		.catch(function (err) {
+			console.error("Error generating zip file:", err);
+		});
+
 	exportimportDialog.onclose = function() {
 		if (exportimportDialog.returnValue == 'ok') {
 		}
@@ -5150,6 +5168,16 @@ function exportList() {
 	} else {
 		alert("The <dialog> API is not supported by this browser");
 	}
+}
+function base64ToArrayBuffer(base64)
+{
+	const binaryString = atob(base64);
+	const len = binaryString.length;
+	const bytes = new Uint8Array(len);
+	for (let i = 0; i < len; i++) {
+		bytes[i] = binaryString.charCodeAt(i);
+	}
+	return bytes.buffer;
 }
 function importList() {
 	exportimportDialogEdit.value = ''
@@ -5168,11 +5196,41 @@ function importList() {
 				importData = JSON.parse(Text)
 			} catch(err) {
 			}
-			localStorage.setItem("watamePlayer_PlayList", JSON.stringify(importData["playListData"]))
-			localStorage.setItem("watamePlayer_Volumes", JSON.stringify(importData["individualVolumeData"]))
-			localStorage.setItem("watamePlayer_settings", JSON.stringify(importData["settings"]))
+			
+			if (importData["version"] == 1)
+			{
+				let data = importData["data"];
+				const arrayBuffer = base64ToArrayBuffer(data);
+				const zip = new JSZip();
 
-			readData();
+				zip.loadAsync(arrayBuffer)
+					.then(function (zip) {
+						return zip.file("sample.txt").async("text");
+					})
+					.then(function (text) {
+						try {
+							importData = JSON.parse(text)
+						} catch(err) {
+						}
+						localStorage.setItem("watamePlayer_PlayList", JSON.stringify(importData["playListData"]))
+						localStorage.setItem("watamePlayer_Volumes", JSON.stringify(importData["individualVolumeData"]))
+						localStorage.setItem("watamePlayer_settings", JSON.stringify(importData["settings"]))
+
+						readData();
+					})
+					.catch(function (err) {
+						console.error("Error decompressing zip file:", err);
+					});
+			}
+			else
+			{
+				localStorage.setItem("watamePlayer_PlayList", JSON.stringify(importData["playListData"]))
+				localStorage.setItem("watamePlayer_Volumes", JSON.stringify(importData["individualVolumeData"]))
+				localStorage.setItem("watamePlayer_settings", JSON.stringify(importData["settings"]))
+
+				readData();
+			}
+
 		}
 	}
 	if (typeof exportimportDialog.showModal === "function") {
@@ -5205,10 +5263,11 @@ function TestClipTime_End_onClick()
 		endTime = secondsToTime(currenTime);
 		TestClipTime_End.value = endTime;
 	}
-	testPlayerEndTime = getSeconds(endTime)
-	let restartTime = testPlayerEndTime - 5;
+	endTime = getSeconds(endTime);
+	let restartTime = endTime - 5;
 	videoControl_oninput(restartTime);
 	videoControl_onchange(restartTime);
+	testPlayerEndTime = endTime;
 	let state = player_getPlayerState()
 	if (state == YT.PlayerState.PAUSED) {
 		player.playVideo()
