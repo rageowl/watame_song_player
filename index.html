@@ -5216,7 +5216,9 @@ function TestClipTime_End_onClick()
 }
 function TestClipTime_End_onFocus(input)
 {
-    if (input.value === '') {
+	let state = player_getPlayerState()
+    if (input.value === '' && (state == YT.PlayerState.PLAYING || state == YT.PlayerState.PAUSED))
+	{
         input.value = input.placeholder;
         input.select();
     }
@@ -5374,8 +5376,8 @@ function TestClipTime_End_onFocus(input)
 				<button style="margin: 5px 0;" onClick="TestClipTime_Start_onClick()">Test</button>
 			</div>
 			<div class="set" style="display: flex; flex-direction: column; align-items: center;">
-				<input id="TestClipTime_End" type="text" placeholder="End Time" style="margin: 5px 0;">
-				<button style="margin: 5px 0;" onClick="TestClipTime_End_onClick()", onfocus="TestClipTime_End_onFocus(this)">Test</button>
+				<input id="TestClipTime_End" type="text" placeholder="End Time" style="margin: 5px 0;", onFocus="TestClipTime_End_onFocus(this)">
+				<button style="margin: 5px 0;" onClick="TestClipTime_End_onClick()">Test</button>
 			</div>
 		</div>
 		<script src="https://www.youtube.com/iframe_api"></script>
