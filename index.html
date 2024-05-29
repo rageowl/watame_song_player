@@ -3755,6 +3755,10 @@ function playVideoData(data) {
 	let beginTime = Date.now()
 	console.log('[' + beginTime + ']playVideoData: ' + currentVideoClip.key)
 	TestClipTime_Start.value = data.start
+	if (data.start.length == 0)
+	{
+		TestClipTime_Start.placeholder = "00:00:00"
+	}
 	TestClipTime_End.value = data.end
 	let startTime = getSeconds(data.start, 0)
 	let endtime = getSeconds(data.end, -1)
@@ -3853,6 +3857,10 @@ function playVideoData(data) {
 						{
 							LastVideoTime = currentTime;
 						}
+					}
+					if (TestClipTime_End.value.length == 0)
+					{
+						TestClipTime_End.placeholder = secondsToTime(currentTime)
 					}
 				}
 				if (!volumeControl.isChanging) {
