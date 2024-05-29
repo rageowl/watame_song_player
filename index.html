@@ -3841,6 +3841,7 @@ function playVideoData(data) {
 						else if (testPlayerEndTime >= 0 && testPlayerEndTime < currentTime)
 						{
 							player.pauseVideo()
+							testPlayerEndTime = -1
 						}
 						else if (endtime < currentTime)
 						{
