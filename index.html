@@ -3499,9 +3499,10 @@ function getSeconds(value, defaultVal) {
 }
 function secondsToTime(seconds)
 {
-	let hours = seconds / 3600
+	seconds = parseInt(seconds)
+	let hours = parseInt(seconds / 3600)
 	seconds -= hours * 3600
-	let minutes = seconds / 60
+	let minutes = parseInt(seconds / 60)
 	seconds -= minutes * 60
 	return `${fillCharacter(hours, 2, '0')}:${fillCharacter(minutes, 2, '0')}:${fillCharacter(seconds, 2, '0')}`
 }
@@ -3723,7 +3724,7 @@ function playContext_playOrOpen_r(ctx, doPlay) {
 let ReservedStartTime = undefined;
 let LastVideoTime = 0
 let playCounter = 0
-let playerEndTime = -1
+let testPlayerEndTime = -1
 function playVideoData(data) {
 	if (!data) {
 		common_stopVideo()
@@ -3757,7 +3758,7 @@ function playVideoData(data) {
 	TestClipTime_End.value = data.end
 	let startTime = getSeconds(data.start, 0)
 	let endtime = getSeconds(data.end, -1)
-	playerEndTime = endtime
+	testPlayerEndTime = -1
 	let playingKey = ++playCounter
 	
 	if (!data.restricted) {
@@ -3812,40 +3813,44 @@ function playVideoData(data) {
 			if (state == YT.PlayerState.PLAYING || state == YT.PlayerState.PAUSED)
 			{
 				if (!videoControl.isChanging) {
-					let currenTime = player.getCurrentTime()
-					videoControl.value = currenTime
+					let currentTime = player.getCurrentTime()
+					videoControl.value = currentTime
 					if (ReservedStartTime != undefined)
 					{
-						let diff = Math.abs(currenTime - ReservedStartTime);
+						let diff = Math.abs(currentTime - ReservedStartTime);
 						if (diff > 1)
 						{
 							player.seekTo(ReservedStartTime, true);
 						}
 						else
 						{
-							//console.log('OnInterval.setVolume' + ';currenTime:' + currenTime)
+							//console.log('OnInterval.setVolume' + ';currentTime:' + currentTime)
 							player.setVolume(ReservedVolume)
 							ReservedStartTime = undefined
-							LastVideoTime = currenTime
+							LastVideoTime = currentTime
 						}
 					}
 					else
 					{
-						let diff = Math.abs(LastVideoTime - currenTime)
+						let diff = Math.abs(LastVideoTime - currentTime)
 						if (diff > 1.5 && (curTime - beginTime) <= 10000)
 						{
 							console.log('OnInterval.ForcedRefresh: ' + currentVideoClip.key)
 							player.seekTo(LastVideoTime, true);
 						}
-						else if (playerEndTime >= 0 && playerEndTime < currenTime)
+						else if (testPlayerEndTime >= 0 && testPlayerEndTime < currentTime)
 						{
-							//console.log('OnInterval.FinishVideo' + ';currenTime:' + currenTime + ';endtime:' + endtime)
+							player.pauseVideo()
+						}
+						else if (endtime < currentTime)
+						{
+							//console.log('OnInterval.FinishVideo' + ';currentTime:' + currentTime + ';endtime:' + endtime)
 							console.log('OnInterval.FinishVideo: ' + currentVideoClip.key)
 							onFinishVideo(false)
 						}
 						else
 						{
-							LastVideoTime = currenTime;
+							LastVideoTime = currentTime;
 						}
 					}
 				}
@@ -5177,6 +5182,10 @@ function TestClipTime_Start_onClick()
 	startTime = getSeconds(startTime);
 	videoControl_oninput(startTime);
 	videoControl_onchange(startTime);
+	let state = player_getPlayerState()
+	if (state == YT.PlayerState.PAUSED) {
+		player.playVideo()
+	}
 }
 function TestClipTime_End_onClick()
 {
@@ -5187,10 +5196,14 @@ function TestClipTime_End_onClick()
 		endTime = secondsToTime(currenTime);
 		TestClipTime_End.value = endTime;
 	}
-	playerEndTime = getSeconds(endTime)
-	let restartTime = playerEndTime - 5;
+	testPlayerEndTime = getSeconds(endTime)
+	let restartTime = testPlayerEndTime - 5;
 	videoControl_oninput(restartTime);
 	videoControl_onchange(restartTime);
+	let state = player_getPlayerState()
+	if (state == YT.PlayerState.PAUSED) {
+		player.playVideo()
+	}
 }
 
 		</script>
