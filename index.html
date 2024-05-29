@@ -5214,7 +5214,13 @@ function TestClipTime_End_onClick()
 		player.playVideo()
 	}
 }
-
+function TestClipTime_End_onFocus(input)
+{
+    if (input.value === '') {
+        input.value = input.placeholder;
+        input.select();
+    }
+}
 		</script>
 	</head>
 	<body onload="init()">
@@ -5369,7 +5375,7 @@ function TestClipTime_End_onClick()
 			</div>
 			<div class="set" style="display: flex; flex-direction: column; align-items: center;">
 				<input id="TestClipTime_End" type="text" placeholder="End Time" style="margin: 5px 0;">
-				<button style="margin: 5px 0;" onClick="TestClipTime_End_onClick()">Test</button>
+				<button style="margin: 5px 0;" onClick="TestClipTime_End_onClick()", onfocus="TestClipTime_End_onFocus(this)">Test</button>
 			</div>
 		</div>
 		<script src="https://www.youtube.com/iframe_api"></script>
