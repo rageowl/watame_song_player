@@ -1,0 +1,100 @@
+.tblWrap {
+    display:flex;
+    flex-direction: column;
+    overflow: auto;
+}
+.userTblHead {
+    flex: none;
+    overflow-x: hidden;
+}
+.userTbl {
+    flex: 1;
+    overflow: auto;
+}
+.tblWrap table {
+    width: 100%;
+    border-spacing: 0;
+    border-width: 1px 0;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+.tblWrap table thead th {
+    background: #eee;
+}
+.tblWrap table tr {
+    border-bottom: 1px solid #aaa;
+    height:20px;
+    text-align: center;
+}
+.tblWrap table td {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.tblWrap table td.left {
+    text-align: left;
+    padding-left: 10px;
+}
+.tblWrap table th:not(:last-child), table td:not(:last-child) {
+    border-right: solid 1px #aaa;
+}
+.userTbl[dragHover="1"] {
+    outline: solid #1E90FF;
+}
+.userTbl table {
+    font-size:14px;
+    border-top: 0px;
+}
+.userTblHead table {
+    overflow: hidden;
+    border-top: 2px solid #aaa;
+    border-bottom: 1px solid #aaa;
+}
+.userTblHead table td[dragHover="1"] {
+    color: black;
+    background: linear-gradient(to right, #1E90FF 20%, transparent 20%);
+}
+.userTblHead table td[dragHover="2"] {
+    color: black;
+    background: linear-gradient(to left, #1E90FF 20%, transparent 20%);
+}
+.userTbl table tr[selected="true"] {
+    color: #FFFFFF;
+    background: #1E90FF;
+}
+.userTbl table tr[dragHover="1"] {
+    color: black;
+    background: linear-gradient(#1E90FF 40%, white 40%);
+}
+.userTbl table tr[dragHover="2"] {
+    color: black;
+    background: linear-gradient(white 60%, #1E90FF 60%);
+}
+.userTbl table tr[dragHover="3"] {
+    color: black;
+    background: linear-gradient(white 20%, #1E90FF 20% 80%, white 80%);
+}
+.contextMenuDiv {
+    display:flex;
+    flex-direction: column;
+    background: white;
+    width: 200px;
+    box-shadow:1px 1px 3px 1px;
+}
+.contextMenuDivItemNormal {
+    display:flex;
+    padding:4px 0 0 4px;
+    user-select: none;
+}
+.contextMenuDivItemHover {
+    display:flex;
+    padding:4px 0 0 4px;
+    user-select: none;
+    background: #E8E8E8;
+} 
