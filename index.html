@@ -2596,7 +2596,7 @@ function init() {
 		itemOpen.onclick = function() {
 			playListItemsTable_playOrOpen(playListItemsTable.selectedDataKey, false)
 		}
-		let itemSearch = playListContextMenu.addItem()
+		let itemSearch = playListItemsContextMenu.addItem()
 		itemSearch.setElements('Search Playlists')
 		itemSearch.onclick = function() {
 			let data = playListTable.getDataByKey(playListTable.selectedDataKey)
