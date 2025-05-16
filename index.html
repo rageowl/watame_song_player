@@ -4802,7 +4802,7 @@ function playListTable_SearchByKey(searchItemKey) {
     }
 
     playListTable.filterFunction = function(data) {
-        return data.key == itemKey;
+        return data.key == searchItemKey;
     };
 
     playListTable.updateList();
