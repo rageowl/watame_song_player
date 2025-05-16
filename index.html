@@ -2467,12 +2467,12 @@ function init() {
 			totalList_playVideo(videoClipTable.selectedDataIndex)
 		}
 
-		let itemSearch = totalListContextMenu.addItem()
-		itemSearch.setElements('Search for Playlists Containing Item')
-		itemSearch.onclick = function() {
+		let itemSearchContaining = totalListContextMenu.addItem()
+		itemSearchContaining.setElements('Search for Playlists Containing Item')
+		itemSearchContaining.onclick = function() {
 			showPlaylist.checked = true
 			updateDivVisible()
-			playListTable_SearchByItemKey(videoClipTable.getDataByKey(videoClipTable.selectedDataKey).key)
+			playListTable_SearchContaining(videoClipTable.getDataByKey(videoClipTable.selectedDataKey).key)
 		}
 
 		let itemCopyToClipboard = totalListContextMenu.addItem()
@@ -2500,10 +2500,16 @@ function init() {
 			playList_open(playListTable.getDataByKey(playListTable.selectedDataKey))
 		}
 		let itemSearch = playListContextMenu.addItem()
-		itemSearch.setElements('Search for Playlists Containing Item')
+		itemSearch.setElements('Search Playlists')
 		itemSearch.onclick = function() {
 			let data = playListTable.getDataByKey(playListTable.selectedDataKey)
-			playListTable_SearchByItemKey(data.key)
+			playListTable_SearchByKey(data.key)
+		}
+		let itemSearchContaining = playListContextMenu.addItem()
+		itemSearchContaining.setElements('Search for Playlists Containing Item')
+		itemSearchContaining.onclick = function() {
+			let data = playListTable.getDataByKey(playListTable.selectedDataKey)
+			playListTable_SearchContaining(data.key)
 		}
 		let itemEdit = playListContextMenu.addItem()
 		itemEdit.setElements('Edit')
@@ -2602,7 +2608,7 @@ function init() {
 			let data = playListItemsTable.getDataByKey(playListItemsTable.selectedDataKey).data
 			showPlaylist.checked = true
 			updateDivVisible()
-			playListTable_SearchByItemKey(data.key)
+			playListTable_SearchContaining(data.key)
 		}
 		let itemSelect = playListItemsContextMenu.addItem()
 		itemSelect.setElements('Select')
@@ -4787,7 +4793,19 @@ function playListTable_Search() {
 	}
 	playListTable.scrollToRowByDataKey(playListTable.selectedDataKey, true)
 }
-function playListTable_SearchByItemKey(searchItemKey) {
+function playListTable_SearchByKey(searchItemKey) {
+    if (!searchItemKey) {
+        console.error("No itemKey ID provided");
+        return;
+    }
+
+    playListTable.filterFunction = function(data) {
+        return data.key == itemKey;
+    };
+
+    playListTable.updateList();
+}
+function playListTable_SearchContaining(searchItemKey) {
     if (!searchItemKey) {
         console.error("No itemKey ID provided");
         return;
