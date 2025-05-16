@@ -2499,12 +2499,6 @@ function init() {
 		itemSelect.onclick = function() {
 			playList_open(playListTable.getDataByKey(playListTable.selectedDataKey))
 		}
-		let itemSearch = playListContextMenu.addItem()
-		itemSearch.setElements('Search Playlists')
-		itemSearch.onclick = function() {
-			let data = playListTable.getDataByKey(playListTable.selectedDataKey)
-			playListTable_SearchByKey(data.key)
-		}
 		let itemSearchContaining = playListContextMenu.addItem()
 		itemSearchContaining.setElements('Search for Playlists Containing Item')
 		itemSearchContaining.onclick = function() {
@@ -2602,9 +2596,17 @@ function init() {
 		itemOpen.onclick = function() {
 			playListItemsTable_playOrOpen(playListItemsTable.selectedDataKey, false)
 		}
-		let itemSearch = playListItemsContextMenu.addItem()
-		itemSearch.setElements('Search for Playlists Containing Item')
+		let itemSearch = playListContextMenu.addItem()
+		itemSearch.setElements('Search Playlists')
 		itemSearch.onclick = function() {
+			let data = playListTable.getDataByKey(playListTable.selectedDataKey)
+			showPlaylist.checked = true
+			updateDivVisible()
+			playListTable_SearchByKey(data.key)
+		}
+		let itemSearchContaining = playListItemsContextMenu.addItem()
+		itemSearchContaining.setElements('Search for Playlists Containing Item')
+		itemSearchContaining.onclick = function() {
 			let data = playListItemsTable.getDataByKey(playListItemsTable.selectedDataKey).data
 			showPlaylist.checked = true
 			updateDivVisible()
