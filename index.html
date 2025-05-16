@@ -2599,7 +2599,7 @@ function init() {
 		let itemSearch = playListItemsContextMenu.addItem()
 		itemSearch.setElements('Search Playlists')
 		itemSearch.onclick = function() {
-			let data = playListTable.getDataByKey(playListTable.selectedDataKey)
+			let data = playListItemsTable.getDataByKey(playListTable.selectedDataKey).data
 			showPlaylist.checked = true
 			updateDivVisible()
 			playListTable_SearchByKey(data.key)
