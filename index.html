@@ -2,7 +2,6 @@
 	<title>Watame's Song Player</title>
 	<meta charset="UTF-8">
 	<script type="text/javascript" charset="utf-8">
-var playingList = undefined
 var playListData = undefined
 var individualVolumeData = undefined
 const SheetHeader = "http://spreadsheets.google.com/tq?key="
@@ -1889,45 +1888,48 @@ function readData_Finalize()
 			}
 		}
 	} else {
-		if (playingList != undefined) {
-			showTotallist.checked = false
-			showPlaylist.checked = false
-			showPlaylistItems.checked = true
-			let playList = playList_new()
-			playList.trackName = 'わためぇ Night Fever'
-			playList.originalArtist = 'Various Artist'
-			playList.coveredBy = 'Various Artist'
-			playList.category = 'うた枠！わためぇ Night Feverとか🐏'
-			playList.shuffle = false
-			makeSearchText(playList)
-			for (let i = 0; i < playingList.length; ++i) {
-					let data = videoClipMap.get(playingList[i])
+		showTotallist.checked = false
+		showPlaylist.checked = false
+		showPlaylistItems.checked = true
+
+		const headers = videoClipTable.selectHeader(['trackName'])
+		if (headers.length != 0) {
+			const shuffle = false
+			const playEntireVideo = false
+			const commonCategory = 'うた枠！わためぇ Night Feverとか🐏'
+			const commonTrackName = 'Various Artist'
+			const commonOriginalArtist = 'Various Artist'
+			const commonCoveredBy = '角巻わため'
+			let option = {
+				selectedClip : false,
+				shuffle : shuffle,
+				playEntireVideo : playEntireVideo,
+				appendIfExists : totalListHeaderSelect_cbAppendIfExists.checked,
+				appendtoFront : totalListHeaderSelect_cbAppendToFront.checked,
+				commonTextMap : { category:commonCategory, trackName:commonTrackName, originalArtist:commonOriginalArtist, coveredBy:commonCoveredBy },
+			}
+			const playListData = totalList_makeGroupedPlayList(headers, option)
+			if (playListData.length) {
+				let playList = playList_new()
+				playList.trackName = 'わためぇ Night Fever'
+				playList.originalArtist = 'Various Artist'
+				playList.coveredBy = 'Various Artist'
+				playList.category = 'うた枠！わためぇ Night Feverとか🐏'
+				playList.shuffle = false
+				makeSearchText(playList)
+
+				playListItems.push(playList)
+
+				for (let i = 0; i < playListData.length; ++i) {
+					let data = playListData[i]
 					if (data != undefined) {
 						playList_newItem(playList, data, 0)
+						playListItems.push(data)
+					}
 				}
+				
 			}
-			
-			playListItems.push(playList)
-		} else {
-			const defaultCategory = 'うた枠！わためぇ Night Feverとか🐏'
-			showTotallist.checked = false
-			showPlaylist.checked = false
-			showPlaylistItems.checked = true
-			let playList = playList_new()
-			playList.trackName = 'わためぇ Night Fever'
-			playList.originalArtist = 'Various Artist'
-			playList.coveredBy = '角巻わため'
-			playList.category = defaultCategory
-			playList.shuffle = false
-			makeSearchText(playList)
-
-			const headers = videoClipTable.selectHeader(['category'])
-			const categoryGroupMap = dataList_groupBy(videoClipList, headers)
-			
-			for (let clipItem of categoryGroupMap.get(defaultCategory)) {
-				playList_newItem(playList, clipItem, 0)
-			}
-			playListItems.push(playList)
+			videoClipTable.updateList()
 		}
 	}
 	if (playListItems.length) {
