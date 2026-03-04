@@ -249,13 +249,7 @@ function copySelectedItemsToClipboard(list, selectedColumnNames=null) {
 	if (text.length == 0) {
 		return
 	}
-	const t = document.createElement("textarea");
-	document.body.appendChild(t);
-	t.value = text;
-	t.select();
-	document.execCommand('copy');
-	document.body.removeChild(t);
-	list.focus()
+	navigator.clipboard.writeText(text).then(() => list.focus())
 }
 function playListItemsTable_selectAll() {
 	playListItemsTable.selectAll()

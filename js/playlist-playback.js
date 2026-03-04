@@ -37,21 +37,10 @@ function player_getVolume() {
 }
 function getLink(value) {
 	let start = getSeconds(value.start, 0)
-	//*/
 	let url = ["https://www.youtube.com/watch?v=", value.ID]
 	if (start > 0) {
 		url.push("&t=", start)
 	}
-	/*/
-	let url = ["https://www.youtube.com/embed/", value.ID, "?autoplay=1"]
-	if (start > 0) {
-		url.push("&start=", start)
-	}
-	let endtime = getSeconds(value.end, 0)
-	if (endtime > 0) {
-		url.push("&end=", endtime)
-	}
-	//*/
 	return url.join('')
 }
 function openWindow(value) {
@@ -101,7 +90,9 @@ function playListItems_play(playItem) {
 
 	playContext_copyFromView()
 	ctx.currentPlayingItem = playItem
-	playContext_play_r(ctx)
+	if (!playContext_play_r(ctx)) {
+		common_stopVideo()
+	}
 }
 function playListItemsTable_play(dataKey) {
 	let dataIndex = playListItemsTable.getDataIndexByKey(dataKey)
