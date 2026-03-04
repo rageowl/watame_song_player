@@ -1894,42 +1894,37 @@ function readData_Finalize()
 
 		const headers = videoClipTable.selectHeader(['trackName'])
 		if (headers.length != 0) {
-			const shuffle = false
-			const playEntireVideo = false
 			const commonCategory = 'うた枠！わためぇ Night Feverとか🐏'
 			const commonTrackName = 'Various Artist'
 			const commonOriginalArtist = 'Various Artist'
 			const commonCoveredBy = '角巻わため'
 			let option = {
 				selectedClip : false,
-				shuffle : shuffle,
-				playEntireVideo : playEntireVideo,
+				shuffle : false,
+				playEntireVideo : false,
 				appendIfExists : totalListHeaderSelect_cbAppendIfExists.checked,
 				appendtoFront : totalListHeaderSelect_cbAppendToFront.checked,
 				commonTextMap : { category:commonCategory, trackName:commonTrackName, originalArtist:commonOriginalArtist, coveredBy:commonCoveredBy },
 			}
-			const playListData = totalList_makeGroupedPlayList(headers, option)
-			if (playListData.length) {
+			const groupedPlaylists = totalList_makeGroupedPlayList(headers, option)
+			if (groupedPlaylists.length) {
 				let playList = playList_new()
 				playList.trackName = 'わためぇ Night Fever'
 				playList.originalArtist = 'Various Artist'
 				playList.coveredBy = 'Various Artist'
 				playList.category = 'うた枠！わためぇ Night Feverとか🐏'
 				playList.shuffle = false
-				makeSearchText(playList)
 
 				playListItems.push(playList)
 
-				for (let i = 0; i < playListData.length; ++i) {
-					let data = playListData[i]
+				for (let i = 0; i < groupedPlaylists.length; ++i) {
+					let data = groupedPlaylists[i]
 					if (data != undefined) {
 						playList_newItem(playList, data, 0)
 						playListItems.push(data)
 					}
 				}
-				
 			}
-			videoClipTable.updateList()
 		}
 	}
 	if (playListItems.length) {
@@ -4798,34 +4793,24 @@ function playListTable_Search() {
 	playListTable.scrollToRowByDataKey(playListTable.selectedDataKey, true)
 }
 function playListTable_SearchByKey(searchItemKey) {
-    if (!searchItemKey) {
-        console.error("No itemKey ID provided");
-        return;
-    }
-
-    playListTable.filterFunction = function(data) {
-        return data.key == searchItemKey;
-    };
-
-    playListTable.updateList();
+	if (!searchItemKey) {
+		console.error("No itemKey ID provided");
+		return;
+	}
+	playListTable.filterFunction = function(data) {
+		return data.key === searchItemKey;
+	};
+	playListTable.updateList();
 }
 function playListTable_SearchContaining(searchItemKey) {
-    if (!searchItemKey) {
-        console.error("No itemKey ID provided");
-        return;
-    }
-
-    playListTable.filterFunction = function(data) {
-        for (let i = 0; i < data.items.length; i++) {
-            let itemKey = data.items[i].data.key;
-            if (itemKey === searchItemKey) {
-                return true;
-            }
-        }
-        return false;
-    };
-
-    playListTable.updateList();
+	if (!searchItemKey) {
+		console.error("No itemKey ID provided");
+		return;
+	}
+	playListTable.filterFunction = function(data) {
+		return data.items.some(item => item.data.key === searchItemKey);
+	};
+	playListTable.updateList();
 }
 function playListItemsTable_Search() {
 	let keyWord = playListItemsButton_search.value
