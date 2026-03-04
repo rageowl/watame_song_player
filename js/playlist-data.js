@@ -15,9 +15,6 @@ function playList_new() {
 }
 function playList_load(data) {
 	const item = { type:2, key:data.key, items:[], category:data.category, trackName:data.trackName, originalArtist:data.originalArtist, coveredBy:data.coveredBy, date:data.date, shuffle:data.shuffle, entirePlay:data.entirePlay, refCount:0 }
-	if (item.singer == undefined) {
-		item.singer = ''
-	}
 	makeSearchText(item)
 	return item
 }
@@ -164,18 +161,18 @@ function playListTable_deleteAll(bSave = true) {
 	}
 }
 function playList_addToPlayListItemsByKeys(keys) {
-	let itmeKeys = []
+	let itemKeys = []
 	playListItemsTable.beginUpdate()
 	for (let i = 0; i < keys.length; ++i) {
 		let data = playListTable.getDataByKey(keys[i])
 		let item = playList_insertItem(null, data)
-		itmeKeys.push(item.key)
+		itemKeys.push(item.key)
 	}
 	playListItemsTable.endUpdate()
 	playListTable.updateList()
 	playListItemsTable.clearSelection()
-	for (let i = 0; i < itmeKeys.length; ++i) {
-		playListItemsTable.setDataRowSelection(itmeKeys[i], true)
+	for (let i = 0; i < itemKeys.length; ++i) {
+		playListItemsTable.setDataRowSelection(itemKeys[i], true)
 	}
 	setDataChanged()
 }
