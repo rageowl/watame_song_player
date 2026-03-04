@@ -389,10 +389,10 @@ function volumeControl_set(value) {
 			value = Number(value) + relVolume
 			individualVolumeControl.value = value
 			individualVolumeText.innerHTML = value + "%"
-			player.setVolume(value)
+			if (playState.playerLoaded) player.setVolume(value)
 		}
 	} else {
-		player.setVolume(value)
+		if (playState.playerLoaded) player.setVolume(value)
 		individualVolumeControl.value = value
 		volumeText.innerHTML = value + "%"
 		individualVolumeText.innerHTML = value + "%"

@@ -185,6 +185,8 @@ class MultiColumnList {
 		this.userTbl = userTbl
 		this.tblHeader = tblHeader
 		this.tblBody = tblBody
+
+		new ResizeObserver(() => this.adjustScroll()).observe(userTbl)
 		
 		let _divFilter = document.createElement('div')
 		document.body.appendChild(_divFilter);
@@ -775,8 +777,9 @@ class MultiColumnList {
 		let width = this._minWidth
 		//console.log(this.userTbl.scrollHeight, this.userTbl.clientHeight)
 		if ((this.userTbl.scrollHeight == 0 && this.userTbl.clientHeight == 0) || (this.userTbl.scrollHeight > this.userTbl.clientHeight)) {
-			this._lastHeaderColumn.style.width = 17 + 'px'
-			width += 17
+			const scrollbarWidth = this.userTbl.offsetWidth - this.userTbl.clientWidth
+			this._lastHeaderColumn.style.width = scrollbarWidth + 'px'
+			width += scrollbarWidth
 		} else {
 			this._lastHeaderColumn.style.width = 0 + 'px'
 		}
