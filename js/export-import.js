@@ -1,5 +1,5 @@
 ﻿function exportList() {
-	exportData = {}
+	let exportData = {}
 	exportData["playListData"] = playList_getJson()
 	exportData["individualVolumeData"] = volume_getJson()
 	exportData["settings"] = settings_getJson()
@@ -16,10 +16,6 @@
 			console.error("Error generating zip file:", err);
 		});
 
-	exportimportDialog.onclose = function() {
-		if (exportimportDialog.returnValue == 'ok') {
-		}
-	}
 	if (typeof exportimportDialog.showModal === "function") {
 		exportimportDialog.showModal();
 	} else {

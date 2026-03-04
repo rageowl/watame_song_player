@@ -47,8 +47,8 @@ function playListItems_prev() {
 			if (orderIdx < 0) {
 			ctx.currentPlayingItem = undefined
 			if (isLast) {
-				const sufflePlayList = ctx.shuffled
-				if (sufflePlayList) {
+				const shufflePlayList = ctx.shuffled
+				if (shufflePlayList) {
 					orderIdx = 0
 				} else {
 					orderIdx = playOrder.length - 1
@@ -131,8 +131,8 @@ function nextButton_onClick() {
 	playListItems_next(false)
 }
 function playListItemsTable_updatePlayOrder() {
-	const sufflePlayList = playState.currentViewContext ? playState.currentViewContext.shuffled : false
-	if (!sufflePlayList) {
+	const shufflePlayList = playState.currentViewContext ? playState.currentViewContext.shuffled : false
+	if (!shufflePlayList) {
 		playList_resetPlayOrder()
 	}
 }
@@ -318,23 +318,14 @@ function totalList_copyTitle(list) {
 	if (text.length == 0) {
 		return
 	}
-	const t = document.createElement("textarea");
-	document.body.appendChild(t);
-	t.value = text;
-	t.select();
-	document.execCommand('copy');
-	document.body.removeChild(t);
-	list.focus()
+	navigator.clipboard.writeText(text).then(() => list.focus())
 }
 function list_onKeyDown(list) {
-	if (event.keyCode == 17) {
-	} else if (event.keyCode == 67) {
+	if (event.keyCode == 67) {
 		totalList_copyTitle(list)
 	}
 }
 function list_onKeyUp(list) {
-	if (event.keyCode == 17) {
-	}
 }
 function totalList_onKeyDown() {
 	if (event.keyCode == 13 && showPlaylist.checked) {
