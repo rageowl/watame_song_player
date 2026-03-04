@@ -1,4 +1,4 @@
-// playlist-ui.js - UI 뷰, 다이얼로그, 컨트롤 패널
+﻿// playlist-ui.js - UI 뷰, 다이얼로그, 컨트롤 패널
 
 function playList_getOrdinal(playList) {
 	return playList.items.length == 0
@@ -11,7 +11,7 @@ function playListItem_getOrdinal(item) {
 		: item.data.ordinal
 }
 function playList_open(playList) {
-	array_clear(viewContextStack)
+	array_clear(playState.viewContextStack)
 	playList_push(playList)
 }
 function playList_selectAll() {
@@ -21,11 +21,11 @@ function playList_clearAll() {
 	playListTable.clearSelection()
 }
 function playList_push(playList) {
-	viewContextStack.push(playContext_get(playList))
+	playState.viewContextStack.push(playContext_get(playList))
 	playList_setPage(playList)
 }
 function playList_setPage(playList) {
-	currentViewContext = playContext_get(playList)
+	playState.currentViewContext = playContext_get(playList)
 	playListItemsTable.setData(playList.items)
 	playList_checkBoxShuffle.checked = playList.shuffle
 	playList_checkBoxPlayEntireList.checked = playList.entirePlay
@@ -68,7 +68,7 @@ function playListTable_deleteSelected() {
 	for (let i = 0; i < dataList.length; ++i) {
 		dataList[i].deleted = true
 		playList_itemsDeleted(dataList[i].items)
-		playContextMap.delete(dataList[i].key)
+		playState.playContextMap.delete(dataList[i].key)
 	}
 	playListTable.endUpdate()
 
@@ -85,15 +85,15 @@ function playListTable_deleteSelected() {
 	}
 
 	let deleted = false
-	for (let i = 0; i < viewContextStack.length; ++i) {
-		if (viewContextStack[i].data.deleted) {
+	for (let i = 0; i < playState.viewContextStack.length; ++i) {
+		if (playState.viewContextStack[i].data.deleted) {
 			if (i > 0) {
-				viewContextStack.splice(i, viewContextStack.length)
-				const ctx = viewContextStack[viewContextStack.length - 1]
+				playState.viewContextStack.splice(i, playState.viewContextStack.length)
+				const ctx = playState.viewContextStack[playState.viewContextStack.length - 1]
 				playList_setPage(ctx.data)
 				playListItemsTable.selectedDataKey = ctx.currentViewingItem.key
 			} else {
-				array_clear(viewContextStack)
+				array_clear(playState.viewContextStack)
 				playListItemsTable.setData([])
 			}
 			deleted = true
@@ -105,8 +105,8 @@ function playListTable_deleteSelected() {
 	}
 	videoClipTable.updateList()
 
-	for (let i = 0; i < playContextStack.length; ++i) {
-		if (playContextStack[i].data.deleted) {
+	for (let i = 0; i < playState.playContextStack.length; ++i) {
+		if (playState.playContextStack[i].data.deleted) {
 			common_stopVideo(false)
 			break
 		}
@@ -116,64 +116,64 @@ function playListTable_deleteSelected() {
 	setDataChanged()
 }
 function refreshControlPanel() {
-	const sufflePlayList = currentViewContext ? currentViewContext.shuffled : false
+	const sufflePlayList = playState.currentViewContext ? playState.currentViewContext.shuffled : false
 	suffleIcon.style.opacity = sufflePlayList ? 1 : .4
 	suffleButton.title = sufflePlayList ? 'shuffled' : 'not shuffled'
-	if (modePlayList == 0) {
+	if (playState.modePlayList == 0) {
 		modeIcon.innerHTML = '🔁'
 		modeIcon.style.opacity = .4
 		modeButton.title = 'no repeat'
-	} else if (modePlayList == 1) {
+	} else if (playState.modePlayList == 1) {
 		modeIcon.innerHTML = '🔁'
 		modeIcon.style.opacity = 1
 		modeButton.title = 'repeat track'
-	} else if (modePlayList == 2) {
+	} else if (playState.modePlayList == 2) {
 		modeIcon.innerHTML = '🔂'
 		modeIcon.style.opacity = 1
 		modeButton.title = 'repeat video'
 	}
 
 	let isPlayingContext = false
-	for (let i = 0; i < playContextStack.length; ++i) {
-		if (playContextStack[i] == currentViewContext) {
+	for (let i = 0; i < playState.playContextStack.length; ++i) {
+		if (playState.playContextStack[i] == playState.currentViewContext) {
 			isPlayingContext = true
 			break
 		}
 	}
-	if (isPlayingContext && currentViewContext.currentPlayingItem) {
-		const currentPlayingItem = currentViewContext.currentPlayingItem
-		const playOrder = currentViewContext.playOrder
-		const playOrderMap = currentViewContext.playOrderMap
+	if (isPlayingContext && playState.currentViewContext.currentPlayingItem) {
+		const currentPlayingItem = playState.currentViewContext.currentPlayingItem
+		const playOrder = playState.currentViewContext.playOrder
+		const playOrderMap = playState.currentViewContext.playOrderMap
 		const idx = playOrderMap.get(currentPlayingItem.key)
 		currentOrder.innerHTML = '(' + (idx + 1) + ' / ' + playOrder.length + ')'
 	} else {
 		currentOrder.innerHTML = ''
 	}
 
-	if (currentVideoClip) {
-		currentSong.innerHTML = currentVideoClip.trackName + ' / ' + currentVideoClip.originalArtist
+	if (playState.currentVideoClip) {
+		currentSong.innerHTML = playState.currentVideoClip.trackName + ' / ' + playState.currentVideoClip.originalArtist
 	} else {
 		currentSong.innerHTML = ''
 	}
 
 	//removeAllChildNodes(divViewPath)
 	divViewPath.replaceChildren()
-	for (let i = 0; i < viewContextStack.length; ++i) {
+	for (let i = 0; i < playState.viewContextStack.length; ++i) {
 		if (i != 0) {
 			const label = document.createElement('label')
 			label.appendChild(document.createTextNode('->'))
 			divViewPath.appendChild(label)
 		}
-		let data = viewContextStack[i].data
+		let data = playState.viewContextStack[i].data
 		let anchor = document.createElement('a')
 		anchor.innerHTML = `[${data.trackName} / ${data.originalArtist}]`
 		anchor.href = '#'
 		anchor.onclick = function(e) {
 			e.preventDefault()
 			const idx = i + 1
-			if (viewContextStack.length >= idx) {
-				viewContextStack.splice(idx, viewContextStack.length)
-				const ctx = viewContextStack[viewContextStack.length - 1]
+			if (playState.viewContextStack.length >= idx) {
+				playState.viewContextStack.splice(idx, playState.viewContextStack.length)
+				const ctx = playState.viewContextStack[playState.viewContextStack.length - 1]
 				playList_setPage(ctx.data)
 				playListItemsTable.selectedDataKey = ctx.currentViewingItem.key
 			}
@@ -183,13 +183,13 @@ function refreshControlPanel() {
 
 	//removeAllChildNodes(divPlayPath)
 	divPlayPath.replaceChildren()
-	for (let i = 0; i < playContextStack.length; ++i) {
+	for (let i = 0; i < playState.playContextStack.length; ++i) {
 		if (i != 0) {
 			const label = document.createElement('label')
 			label.appendChild(document.createTextNode('->'))
 			divPlayPath.appendChild(label)
 		}
-		let data = playContextStack[i].data
+		let data = playState.playContextStack[i].data
 		let anchor = document.createElement('a')
 		anchor.innerHTML = `[${data.trackName} / ${data.originalArtist}]`
 		anchor.href = '#'
@@ -197,9 +197,9 @@ function refreshControlPanel() {
 			e.preventDefault()
 			playContext_copyFromPlay()
 			const idx = i + 1
-			if (viewContextStack.length >= idx) {
-				viewContextStack.splice(idx, viewContextStack.length)
-				const ctx = viewContextStack[viewContextStack.length - 1]
+			if (playState.viewContextStack.length >= idx) {
+				playState.viewContextStack.splice(idx, playState.viewContextStack.length)
+				const ctx = playState.viewContextStack[playState.viewContextStack.length - 1]
 				playList_setPage(ctx.data)
 				playListItemsTable.selectedDataKey = ctx.currentViewingItem.key
 			}
@@ -207,7 +207,7 @@ function refreshControlPanel() {
 		divPlayPath.appendChild(anchor)
 	}
 
-	const useIndividualVolume = currentVideoClip && individualVolumeMap.has(currentVideoClip.key)
+	const useIndividualVolume = playState.currentVideoClip && individualVolumeMap.has(playState.currentVideoClip.key)
 	individualVolume.checked = useIndividualVolume
 	individualVolumeControl.disabled = !useIndividualVolume
 	volumeText.innerHTML = volumeControl.value + "%"
@@ -277,8 +277,8 @@ function playListItemsTable_deleteSelected() {
 	playListTable.updateList()
 	videoClipTable.updateList()
 
-	for (let i = 0; i < playContextStack.length; ++i) {
-		const ctx = playContextStack[i]
+	for (let i = 0; i < playState.playContextStack.length; ++i) {
+		const ctx = playState.playContextStack[i]
 		if (ctx.currentPlayingItem && ctx.playOrderMap.get(ctx.currentPlayingItem.key) == undefined) {
 			common_stopVideo()
 			break
@@ -288,13 +288,13 @@ function playListItemsTable_deleteSelected() {
 	setDataChanged()
 }
 function playListItemsTable_deleteAll() {
-	if (playContextStack.length != 0) {
+	if (playState.playContextStack.length != 0) {
 		common_stopVideo(false)
 	}
-	currentViewContext.playOrder = []
-	currentViewContext.playOrderMap.clear()
-	playList_itemsDeleted(currentViewContext.data.items)
-	array_clear(currentViewContext.data.items)
+	playState.currentViewContext.playOrder = []
+	playState.currentViewContext.playOrderMap.clear()
+	playList_itemsDeleted(playState.currentViewContext.data.items)
+	array_clear(playState.currentViewContext.data.items)
 	videoClipTable.updateList()
 	playListItemsTable.refreshList()
 	playListItemsTable.focus()

@@ -1,10 +1,10 @@
-function playButton_onClick() {
-	if (popupWnd) {
+﻿function playButton_onClick() {
+	if (playState.popupWnd) {
 		common_pauseVideo()
 		return
 	}
-	const currentPlayingItem = currentViewContext.currentPlayingItem
-	const playOrder = currentViewContext.playOrder
+	const currentPlayingItem = playState.currentViewContext.currentPlayingItem
+	const playOrder = playState.currentViewContext.playOrder
 	let state = player_getPlayerState()
 	if (state == YT.PlayerState.PLAYING || state == YT.PlayerState.BUFFERING) {
 		player.pauseVideo()
@@ -27,19 +27,19 @@ function playListItems_prev() {
 	if (state == YT.PlayerState.BUFFERING) {
 		return
 	}
-	while (playContextStack.length != 0) {
-		const isLast = playContextStack.length == 1
-		var ctx = playContextStack[playContextStack.length - 1]
+	while (playState.playContextStack.length != 0) {
+		const isLast = playState.playContextStack.length == 1
+		var ctx = playState.playContextStack[playState.playContextStack.length - 1]
 		const currentPlayingItem = ctx.currentPlayingItem
 		if (!currentPlayingItem) {
-			playContextStack.pop()
+			playState.playContextStack.pop()
 			continue
 		}
 		const playOrder = ctx.playOrder
 		const playOrderMap = ctx.playOrderMap
 		let orderIdx = playOrderMap.get(currentPlayingItem.key)
 		if (orderIdx == undefined) {
-			playContextStack.pop()
+			playState.playContextStack.pop()
 			continue
 		}
 		const playList = ctx.data
@@ -54,13 +54,13 @@ function playListItems_prev() {
 					orderIdx = playOrder.length - 1
 				}
 			} else {
-				playContextStack.pop()
+				playState.playContextStack.pop()
 				continue
 			}
 		}
 		ctx.currentPlayingItem = playOrder[orderIdx]
 		if (!playList.entirePlay && !isLast) {
-			playContextStack.pop()
+			playState.playContextStack.pop()
 			continue
 		}
 		if (playContext_play_r(ctx)) {
@@ -73,28 +73,28 @@ function playListItems_next(videoFinished) {
 	if (state == YT.PlayerState.BUFFERING) {
 		return
 	}
-	if (playContextStack.length == 0)
+	if (playState.playContextStack.length == 0)
 	{
 		player.stopVideo();
 		return;
 	}
-	while (playContextStack.length != 0) {
-		const isLast = playContextStack.length == 1
-		var ctx = playContextStack[playContextStack.length - 1]
+	while (playState.playContextStack.length != 0) {
+		const isLast = playState.playContextStack.length == 1
+		var ctx = playState.playContextStack[playState.playContextStack.length - 1]
 		const currentPlayingItem = ctx.currentPlayingItem
 		if (!currentPlayingItem) {
-			playContextStack.pop()
+			playState.playContextStack.pop()
 			continue
 		}
 		const playOrder = ctx.playOrder
 		const playOrderMap = ctx.playOrderMap
 		let orderIdx = playOrderMap.get(currentPlayingItem.key)
 		if (orderIdx == undefined) {
-			playContextStack.pop()
+			playState.playContextStack.pop()
 			continue
 		}
 		const playList = ctx.data
-		if (videoFinished && modePlayList == PLAYMODE_REPEAT_ONE) {
+		if (videoFinished && playState.modePlayList == PLAYMODE_REPEAT_ONE) {
 		} else {
 			++orderIdx
 		}
@@ -104,11 +104,11 @@ function playListItems_next(videoFinished) {
 				if (videoFinished && ctx.shuffled) {
 					playContext_shufflePlayOrder(ctx)
 				}
-				playContextStack.pop()
+				playState.playContextStack.pop()
 				continue
 			} else if (videoFinished) {
-				if (modePlayList == PLAYMODE_NORMAL) {
-					playContextStack.pop()
+				if (playState.modePlayList == PLAYMODE_NORMAL) {
+					playState.playContextStack.pop()
 					continue
 			}
 				if (ctx.shuffled) {
@@ -119,7 +119,7 @@ function playListItems_next(videoFinished) {
 		}
 		ctx.currentPlayingItem = playOrder[orderIdx]
 		if (!playList.entirePlay && !isLast) {
-			playContextStack.pop()
+			playState.playContextStack.pop()
 			continue
 		}
 		if (playContext_play_r(ctx)) {
@@ -131,7 +131,7 @@ function nextButton_onClick() {
 	playListItems_next(false)
 }
 function playListItemsTable_updatePlayOrder() {
-	const sufflePlayList = currentViewContext ? currentViewContext.shuffled : false
+	const sufflePlayList = playState.currentViewContext ? playState.currentViewContext.shuffled : false
 	if (!sufflePlayList) {
 		playList_resetPlayOrder()
 	}
@@ -351,20 +351,20 @@ function videoControl_onchange(value) {
 	const state = player_getPlayerState()
 	if (state == YT.PlayerState.PLAYING || state == YT.PlayerState.PAUSED) {
 		player.seekTo(value, true)
-		LastVideoTime = value
+		playState.LastVideoTime = value
 	}
 	videoControl.isChanging = false
 	//console.log('changed:'+value)
 }
 function suffleButton_onClick() {
-	if (currentViewContext) {
-		currentViewContext.shuffled = !currentViewContext.shuffled
+	if (playState.currentViewContext) {
+		playState.currentViewContext.shuffled = !playState.currentViewContext.shuffled
 	}
 	playList_shuffle()
 	refreshControlPanel()
 }
 function modeButton_onClick() {
-	modePlayList = (modePlayList + 1) % 3
+	playState.modePlayList = (playState.modePlayList + 1) % 3
 	refreshControlPanel()
 }
 function individualVolume_save(key, relVolume) {
@@ -376,12 +376,12 @@ function individualVolume_save(key, relVolume) {
 	}
 }
 function volumeControl_update(value) {
-	if (individualVolume.checked && currentVideoClip) {
+	if (individualVolume.checked && playState.currentVideoClip) {
 		if (individualVolumeControl.value != value) {
 			individualVolumeControl.value = value
 			individualVolumeText.innerHTML = value + "%"
 			const relVolume = Number(value) - Number(volumeControl.value)
-			individualVolume_save(currentVideoClip.key, relVolume)
+			individualVolume_save(playState.currentVideoClip.key, relVolume)
 		}
 	} else if (volumeControl.value != value) {
 		volumeControl.value = value
@@ -391,8 +391,8 @@ function volumeControl_update(value) {
 	}
 }
 function volumeControl_set(value) {
-	if (individualVolume.checked && currentVideoClip) {
-		const relVolume = individualVolumeMap.get(currentVideoClip.key)
+	if (individualVolume.checked && playState.currentVideoClip) {
+		const relVolume = individualVolumeMap.get(playState.currentVideoClip.key)
 		if (relVolume != undefined) {
 			volumeText.innerHTML = value + "%"
 			value = Number(value) + relVolume
@@ -417,8 +417,8 @@ function volumeControl_onchange(value) {
 }
 function volumeControl_onWheel(value) {
 	let volume = player_getVolume()
-	if (individualVolume.checked && currentVideoClip) {
-		const relVolume = individualVolumeMap.get(currentVideoClip.key)
+	if (individualVolume.checked && playState.currentVideoClip) {
+		const relVolume = individualVolumeMap.get(playState.currentVideoClip.key)
 		if (relVolume != undefined) {
 			volume -= relVolume
 		}
@@ -430,10 +430,10 @@ function volumeControl_onWheel(value) {
 	event.preventDefault()
 }
 function individualVolumeControl_set(value) {
-	if (individualVolume.checked && currentVideoClip) {
+	if (individualVolume.checked && playState.currentVideoClip) {
 		player.setVolume(value)
 		let relVolume = Number(value) - Number(volumeControl.value)
-		individualVolume_save(currentVideoClip.key, relVolume)
+		individualVolume_save(playState.currentVideoClip.key, relVolume)
 		individualVolumeText.innerHTML = value + "%"
 	}
 }
@@ -472,24 +472,24 @@ function playListTable_moveDown() {
 	setDataChanged()
 }
 function playList_saveCheckboxes() {
-	const playList = currentViewContext.data
+	const playList = playState.currentViewContext.data
 	playList.shuffle = playList_checkBoxShuffle.checked
 	playList.entirePlay = playList_checkBoxPlayEntireList.checked
 	setDataChanged()
 }
 function playList_updateCheckboxes() {
-	const playList = currentViewContext.data
+	const playList = playState.currentViewContext.data
 	playList_checkBoxShuffle.checked = playList.shuffle
 	playList_checkBoxPlayEntireList.checked = playList.entirePlay
 }
 function individualVolume_onClick() {
-	if (currentVideoClip) {
+	if (playState.currentVideoClip) {
 		if (individualVolume.checked) {
-			individualVolumeMap.set(currentVideoClip.key, 0)
+			individualVolumeMap.set(playState.currentVideoClip.key, 0)
 			individualVolumeControl.disabled = false
 			volume_save()
 		} else {
-			individualVolumeMap.delete(currentVideoClip.key)
+			individualVolumeMap.delete(playState.currentVideoClip.key)
 			individualVolumeControl.disabled = true
 			volume_save()
 			volumeControl_set(volumeControl.value)

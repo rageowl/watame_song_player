@@ -7,8 +7,6 @@ var settingsData = { clipSpreadSheetURL:defaultClipSpreadSheetURL }
 let videoClipList = []
 
 // ── 플레이어 상태 ─────────────────────────────────────────────────────────────
-let popupWnd = null
-let playerLoaded = false
 let videoClipMap = new Map()
 const videoWidth = 800
 const videoHeight = 450
@@ -17,34 +15,38 @@ const videoHeight = 450
 const PLAYMODE_NORMAL = 0
 const PLAYMODE_REPEAT_TRACK = 1
 const PLAYMODE_REPEAT_ONE = 2
-let modePlayList = PLAYMODE_REPEAT_TRACK
 
-// ── 재생 컨텍스트 ─────────────────────────────────────────────────────────────
-let currentViewContext = null
-let playContextMap = new Map()
-let playContextStack = []
-let viewContextStack = []
-let currentVideoClip = null
+// ── 데이터 관련 ───────────────────────────────────────────────────────────────
 let individualVolumeMap = new Map()
-
-// ── 재생 시퀀스 카운터 ────────────────────────────────────────────────────────
 let playListSN = 1
 let nextPlayItemSN = 1
-let interval = null
-let playCounter = 0
-let testPlayerEndTime = -1
-let ReservedStartTime = undefined
-let LastVideoTime = 0
-let LastExecFinishVideoTime = 0
-
-// ── UI 상태 ───────────────────────────────────────────────────────────────────
 let dataChanged = false
+let isLoading = false
+let spreadsheetsFormList = []
 let totalListContextMenu = null
 let playListContextMenu = null
 let playListItemsContextMenu = null
-let spreadsheetsFormList = []
-let isLoading = false
-var ReservedVolume = undefined
+
+// ── 공유 재생 상태 (여러 파일이 읽고 씀) ─────────────────────────────────────
+const playState = {
+	// 뷰/컨텍스트
+	currentViewContext: null,
+	playContextMap: new Map(),
+	playContextStack: [],
+	viewContextStack: [],
+	currentVideoClip: null,
+	modePlayList: PLAYMODE_REPEAT_TRACK,
+	// YouTube 플레이어
+	playerLoaded: false,
+	popupWnd: null,
+	interval: null,
+	playCounter: 0,
+	testPlayerEndTime: -1,
+	ReservedStartTime: undefined,
+	ReservedVolume: undefined,
+	LastVideoTime: 0,
+	LastExecFinishVideoTime: 0,
+}
 
 // ── DOM 헬퍼 ─────────────────────────────────────────────────────────────────
 function createSpan(element, style='') {

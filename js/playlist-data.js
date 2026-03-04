@@ -1,4 +1,4 @@
-// playlist-data.js - 재생목록 데이터 CRUD + 저장/로드
+﻿// playlist-data.js - 재생목록 데이터 CRUD + 저장/로드
 
 function makeSearchText(value) {
 	value.searchTexts = [isUndefined(value.category, ''), isUndefined(value.date, ''), isUndefined(value.trackName, ''), isUndefined(value.originalArtist, ''), isUndefined(value.coveredBy, '')]
@@ -40,13 +40,13 @@ function playList_newItem(playList, data, shufflePriority) {
 function playList_insertItem(playList, data, atDataKey=null, front=false) {
 	let newKey = nextPlayItemSN++
 	if (playList == null) {
-		playList = currentViewContext.data
+		playList = playState.currentViewContext.data
 	}
 	let item = { key:newKey, playList:playList, data:data, shufflePriority:0 }
 	++data.refCount
 
-	if (currentViewContext.data == playList) {
-		let ctx = currentViewContext
+	if (playState.currentViewContext.data == playList) {
+		let ctx = playState.currentViewContext
 		const playOrder = ctx.playOrder
 		const playOrderMap = ctx.playOrderMap
 		playOrderMap.set(item.key, playOrder.length)
@@ -73,8 +73,8 @@ function playList_insertItem(playList, data, atDataKey=null, front=false) {
 	return item
 }
 function playList_insertItems(playList, mayDataList, atDataKey=null, front=false) {
-	let ctx = currentViewContext
-	let currentPlayList = currentViewContext.data
+	let ctx = playState.currentViewContext
+	let currentPlayList = playState.currentViewContext.data
 	if (playList == null) {
 		playList = currentPlayList
 	}
@@ -145,15 +145,15 @@ function playList_itemsDeleted(items) {
 	}
 }
 function playListTable_deleteAll(bSave = true) {
-	if (playContextStack.length != 0) {
+	if (playState.playContextStack.length != 0) {
 		common_stopVideo(false)
 	}
 
 	playListTable.setData([])
 	playListItemsTable.setData([])
-	playContextMap.clear()
-	array_clear(playContextStack)
-	array_clear(viewContextStack)
+	playState.playContextMap.clear()
+	array_clear(playState.playContextStack)
+	array_clear(playState.viewContextStack)
 	for (let i = 0; i < videoClipList.length; ++i) {
 		videoClipList[i].refCount = 0
 	}

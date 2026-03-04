@@ -1,4 +1,4 @@
-function exportList() {
+﻿function exportList() {
 	exportData = {}
 	exportData["playListData"] = playList_getJson()
 	exportData["individualVolumeData"] = volume_getJson()
@@ -124,7 +124,7 @@ function TestClipTime_End_onClick()
 	let restartTime = endTime - 5;
 	videoControl_oninput(restartTime);
 	videoControl_onchange(restartTime);
-	testPlayerEndTime = endTime;
+	playState.testPlayerEndTime = endTime;
 	let state = player_getPlayerState()
 	if (state == YT.PlayerState.PAUSED) {
 		player.playVideo()

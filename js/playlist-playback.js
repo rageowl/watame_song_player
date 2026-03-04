@@ -1,37 +1,37 @@
-// playlist-playback.js - YouTube 재생 제어 + 플레이어 이벤트
+﻿// playlist-playback.js - YouTube 재생 제어 + 플레이어 이벤트
 
 function common_pauseVideo(refresh = true) {
 	playButton.innerText = '\u25b6'
-	if (playerLoaded) {
+	if (playState.playerLoaded) {
 		player.pauseVideo()
 		}
-	if (popupWnd) {
-		popupWnd.close()
-		popupWnd = null
+	if (playState.popupWnd) {
+		playState.popupWnd.close()
+		playState.popupWnd = null
 	}
-	if (interval) {
-		clearInterval(interval)
-		interval = null
+	if (playState.interval) {
+		clearInterval(playState.interval)
+		playState.interval = null
 	}
 	if (refresh) {
 		refreshControlPanel()
 }
 }
 function common_stopVideo(refresh = true) {
-	for (let i = 0; i < playContextStack.length; ++i) {
-		playContextStack[i].currentPlayingItem = undefined
+	for (let i = 0; i < playState.playContextStack.length; ++i) {
+		playState.playContextStack[i].currentPlayingItem = undefined
 	}
-	array_clear(playContextStack)
-	currentVideoClip = null
-	if (playerLoaded) {
+	array_clear(playState.playContextStack)
+	playState.currentVideoClip = null
+	if (playState.playerLoaded) {
 		player.stopVideo()
 	}
 	common_pauseVideo(refresh)
 }
 function player_getVolume() {
-	return ReservedVolume != undefined
-	? ReservedVolume
-	: playerLoaded
+	return playState.ReservedVolume != undefined
+	? playState.ReservedVolume
+	: playState.playerLoaded
 		? player.getVolume()
 		: 100
 }
@@ -59,10 +59,10 @@ function tempAlert(msg,duration) {
 	document.body.appendChild(el);
 }
 function player_getPlayerState() {
-	return playerLoaded ? player.getPlayerState() : YT.PlayerState.ENDED
+	return playState.playerLoaded ? player.getPlayerState() : YT.PlayerState.ENDED
 }
 function refreshPlayButton() {
-	if (popupWnd) {
+	if (playState.popupWnd) {
 		if (!playButton.wnd) {
 			playButton.wnd = true
 			playButton.innerHTML = '\u23f9'
@@ -117,8 +117,8 @@ function playListItemsTable_playOrOpen(dataKey, doPlay) {
 	const ctx = playContext_get(playList)
 	const data = playList.data
 
-	if (viewContextStack.length) {
-		let lastCtx = viewContextStack[viewContextStack.length - 1]
+	if (playState.viewContextStack.length) {
+		let lastCtx = playState.viewContextStack[playState.viewContextStack.length - 1]
 		if (ctx != lastCtx) {
 			return
 		}
@@ -134,13 +134,13 @@ function playVideoData(data) {
 		return
 	}
 
-	if (popupWnd) {
-		popupWnd.close()
-		popupWnd = null
+	if (playState.popupWnd) {
+		playState.popupWnd.close()
+		playState.popupWnd = null
 	}
-	if (interval) {
-		clearInterval(interval)
-		interval = null
+	if (playState.interval) {
+		clearInterval(playState.interval)
+		playState.interval = null
 	}
 
 	let volume = Number(volumeControl.value)
@@ -154,9 +154,9 @@ function playVideoData(data) {
 		player.setVolume(volume)
 	}
 
-	currentVideoClip = data
+	playState.currentVideoClip = data
 	let beginTime = Date.now()
-	console.log('[' + beginTime + ']playVideoData: ' + currentVideoClip.key)
+	console.log('[' + beginTime + ']playVideoData: ' + playState.currentVideoClip.key)
 	TestClipTime_Start.value = data.start
 	if (data.start.length == 0)
 	{
@@ -165,8 +165,8 @@ function playVideoData(data) {
 	TestClipTime_End.value = data.end
 	let startTime = getSeconds(data.start, 0)
 	let endtime = getSeconds(data.end, -1)
-	testPlayerEndTime = -1
-	let playingKey = ++playCounter
+	playState.testPlayerEndTime = -1
+	let playingKey = ++playState.playCounter
 
 	if (!data.restricted) {
 		playVideo(data.ID, startTime, endtime, volume)
@@ -179,8 +179,8 @@ function playVideoData(data) {
 		videoControl.value = 0
 	} else {
 		player.stopVideo()
-		popupWnd = openWindow(data)
-		if (popupWnd == null) {
+		playState.popupWnd = openWindow(data)
+		if (playState.popupWnd == null) {
 			onFinishVideo(false)
 			return
 		}
@@ -196,18 +196,18 @@ function playVideoData(data) {
 	playListTable.updateList()
 	playListItemsTable.updateList()
 
-	interval = setInterval(function() {
+	playState.interval = setInterval(function() {
 		curTime = Date.now()
-		if (popupWnd) {
+		if (playState.popupWnd) {
 			if (endtime >= 0) {
 				let restMilliseconds = (beginTime + (endtime - startTime + 10) * 1000) - curTime
-				if (restMilliseconds <= 0 && !popupWnd.closed && playingKey == playCounter) {
+				if (restMilliseconds <= 0 && !playState.popupWnd.closed && playingKey == playState.playCounter) {
 					onFinishVideo(false)
 				}
 				let value = (curTime - beginTime) / 1000 + startTime
 				videoControl.value = value
 			}
-			if ((curTime - beginTime) > 5000 && popupWnd && popupWnd.closed && playingKey == playCounter) {
+			if ((curTime - beginTime) > 5000 && playState.popupWnd && playState.popupWnd.closed && playingKey == playState.playCounter) {
 				onFinishVideo(false)
 			}
 		} else {
@@ -222,43 +222,43 @@ function playVideoData(data) {
 				if (!videoControl.isChanging) {
 					let currentTime = player.getCurrentTime()
 					videoControl.value = currentTime
-					if (ReservedStartTime != undefined)
+					if (playState.ReservedStartTime != undefined)
 					{
-						let diff = Math.abs(currentTime - ReservedStartTime);
+						let diff = Math.abs(currentTime - playState.ReservedStartTime);
 						if (diff > 1)
 						{
-							player.seekTo(ReservedStartTime, true);
+							player.seekTo(playState.ReservedStartTime, true);
 						}
 						else
 						{
 							//console.log('OnInterval.setVolume' + ';currentTime:' + currentTime)
-							player.setVolume(ReservedVolume)
-							ReservedStartTime = undefined
-							LastVideoTime = currentTime
+							player.setVolume(playState.ReservedVolume)
+							playState.ReservedStartTime = undefined
+							playState.LastVideoTime = currentTime
 						}
 					}
 					else
 					{
-						let diff = Math.abs(LastVideoTime - currentTime)
+						let diff = Math.abs(playState.LastVideoTime - currentTime)
 						if (diff > 1.5 && (curTime - beginTime) <= 10000)
 						{
-							console.log('OnInterval.ForcedRefresh: ' + currentVideoClip.key)
-							player.seekTo(LastVideoTime, true);
+							console.log('OnInterval.ForcedRefresh: ' + playState.currentVideoClip.key)
+							player.seekTo(playState.LastVideoTime, true);
 						}
-						else if (testPlayerEndTime >= 0 && testPlayerEndTime < currentTime)
+						else if (playState.testPlayerEndTime >= 0 && playState.testPlayerEndTime < currentTime)
 						{
 							player.pauseVideo()
-							testPlayerEndTime = -1
+							playState.testPlayerEndTime = -1
 						}
 						else if (endtime < currentTime)
 						{
 							//console.log('OnInterval.FinishVideo' + ';currentTime:' + currentTime + ';endtime:' + endtime)
-							console.log('OnInterval.FinishVideo: ' + currentVideoClip.key)
+							console.log('OnInterval.FinishVideo: ' + playState.currentVideoClip.key)
 							onFinishVideo(false)
 						}
 						else
 						{
-							LastVideoTime = currentTime;
+							playState.LastVideoTime = currentTime;
 						}
 					}
 					if (TestClipTime_End.value.length == 0)
@@ -267,20 +267,20 @@ function playVideoData(data) {
 					}
 				}
 				if (!volumeControl.isChanging) {
-					if (ReservedStartTime == undefined)
+					if (playState.ReservedStartTime == undefined)
 					{
 						let CurrentVolume = player.getVolume();
-						if (ReservedVolume == undefined)
+						if (playState.ReservedVolume == undefined)
 						{
 							volumeControl_update(CurrentVolume)
 						}
-						else if (ReservedVolume != CurrentVolume)
+						else if (playState.ReservedVolume != CurrentVolume)
 						{
-							player.setVolume(ReservedVolume)
+							player.setVolume(playState.ReservedVolume)
 						}
 						else
 						{
-							ReservedVolume = undefined;
+							playState.ReservedVolume = undefined;
 						}
 					}
 				}
@@ -312,7 +312,7 @@ function onYouTubeIframeAPIReady() {
 	})
 }
 function onPlayerReady(event) {
-	playerLoaded = true
+	playState.playerLoaded = true
 	volumeControl_update(player_getVolume())
 	refreshControlPanel()
 }
@@ -325,9 +325,9 @@ function onPlayerStateChange(event) {
 function onError(event) {
 	console.log(event)
 	if (event.data === 101 || event.data === 150 || event.data === 153) {
-		if (currentVideoClip && !currentVideoClip.restricted) {
-			currentVideoClip.restricted = true
-			playVideoData(currentVideoClip)
+		if (playState.currentVideoClip && !playState.currentVideoClip.restricted) {
+			playState.currentVideoClip.restricted = true
+			playVideoData(playState.currentVideoClip)
 		}
 	}
 }
@@ -344,19 +344,19 @@ function playVideo(id, start, end, volume) {
 			'endSeconds': end,
 		});
 	}
-	ReservedStartTime = start
-	ReservedVolume = volume
-	if (ReservedVolume < 0)
+	playState.ReservedStartTime = start
+	playState.ReservedVolume = volume
+	if (playState.ReservedVolume < 0)
 	{
-		ReservedVolume = 0;
+		playState.ReservedVolume = 0;
 	}
 	player.setVolume(0)
 }
 function onFinishVideo(bForce) {
 	let CurTime = Date.now()
-	if (bForce || CurTime - LastExecFinishVideoTime > 1000)
+	if (bForce || CurTime - playState.LastExecFinishVideoTime > 1000)
 	{
-		LastExecFinishVideoTime = CurTime
+		playState.LastExecFinishVideoTime = CurTime
 		playListItems_next(true)
 	}
 }

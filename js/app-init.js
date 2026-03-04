@@ -1,4 +1,4 @@
-function init() {
+﻿function init() {
 	window.addEventListener('beforeunload', (event) => {
 		let state = player_getPlayerState()
 		if (state == YT.PlayerState.PLAYING || state == YT.PlayerState.BUFFERING) {
@@ -84,18 +84,18 @@ function init() {
 	
 	let playListDetailHeaders = [
 		{ name:'', width:40, getter:function(d) {
-			for (let i = 0; i < playContextStack.length; ++i) {
-				if (d.key == playContextStack[i].currentPlayingItem.key) {
+			for (let i = 0; i < playState.playContextStack.length; ++i) {
+				if (d.key == playState.playContextStack[i].currentPlayingItem.key) {
 					return '\u25b6'
 				}
 			}
-			if (viewContextStack.length > 0 && viewContextStack[viewContextStack.length - 1].currentPlayingItem && d.key == viewContextStack[viewContextStack.length - 1].currentPlayingItem.key) {
+			if (playState.viewContextStack.length > 0 && playState.viewContextStack[playState.viewContextStack.length - 1].currentPlayingItem && d.key == playState.viewContextStack[playState.viewContextStack.length - 1].currentPlayingItem.key) {
 				return '\u25b7'
 			}
 			return ''
 		}},
 		{ name:'Order', width:80, title:"Play Order", filter:true, sort:true, numeric:true, getter:function(d) {
-			return currentViewContext.playOrderMap.get(d.key) + 1
+			return playState.currentViewContext.playOrderMap.get(d.key) + 1
 		}},
 		{ name:'Type', width:80, filter:true, sort:true, getter:function(d) { return d.data.type == 1 ? '🎶' : '📁' } },
 		{ name:'Date', width:110, filter:true, sort:true, getter:function(d) { return d.data.date } },
@@ -136,7 +136,7 @@ function init() {
 			if (keys.length == 0) {
 				return
 			}
-			const playList = currentViewContext.data
+			const playList = playState.currentViewContext.data
 			playListItemsTable.beginUpdate()
 			for (let i = 0; i < keys.length; ++i) {
 				let data = videoClipTable.getDataByKey(keys[i])
@@ -165,7 +165,7 @@ function init() {
 			if (keys.length == 0) {
 				return
 			}
-			const playList = currentViewContext.data
+			const playList = playState.currentViewContext.data
 			playListItemsTable.beginUpdate()
 			for (let i = 0; i < keys.length; ++i) {
 				let data = playListTable.getDataByKey(keys[i])
@@ -219,9 +219,9 @@ function init() {
 	
 	let playListHeaders = [
 		{ name:'', width:40, getter:function(d) {
-			if (d.key == currentViewContext.data.key) {
-				for (let i = 0; i < playContextStack.length; ++i) {
-					if (d.key == playContextStack[i].data.key) {
+			if (d.key == playState.currentViewContext.data.key) {
+				for (let i = 0; i < playState.playContextStack.length; ++i) {
+					if (d.key == playState.playContextStack[i].data.key) {
 						return '\u25b6'
 					}
 				}	
@@ -287,7 +287,7 @@ function init() {
 				return
 			}
 			const playList = playListTable.getDataByKey(dataKey)
-			if (playList != currentViewContext.data) {
+			if (playList != playState.currentViewContext.data) {
 				playListItemsTable.beginUpdate()
 				for (let i = 0; i < keys.length; ++i) {
 					let item = playListItemsTable.getDataByKey(keys[i])
@@ -569,7 +569,7 @@ function init() {
 			if (selectedDataKeys.length <= 1) {
 				return
 			}
-			let ctx = currentViewContext
+			let ctx = playState.currentViewContext
 			const playOrder = ctx.playOrder
 			const playOrderMap = ctx.playOrderMap
 			const currentPlayingItem = ctx.currentPlayingItem
@@ -617,7 +617,7 @@ function init() {
 			if (selectedDataKeys.length <= 1) {
 				return
 			}
-			let ctx = currentViewContext
+			let ctx = playState.currentViewContext
 			const playOrder = ctx.playOrder
 			const playOrderMap = ctx.playOrderMap
 			let items = []
@@ -654,7 +654,7 @@ function init() {
 				return
 			}
 
-			let ctx = currentViewContext
+			let ctx = playState.currentViewContext
 			const playOrder = ctx.playOrder
 			const playOrderMap = ctx.playOrderMap
 			let items = []
@@ -695,7 +695,7 @@ function init() {
 				return
 			}
 
-			let ctx = currentViewContext
+			let ctx = playState.currentViewContext
 			const playOrder = ctx.playOrder
 			const playOrderMap = ctx.playOrderMap
 			let items = []

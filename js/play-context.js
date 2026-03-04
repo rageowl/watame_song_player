@@ -1,7 +1,7 @@
-// play-context.js - 재생 컨텍스트 + 재생 순서 관리
+﻿// play-context.js - 재생 컨텍스트 + 재생 순서 관리
 
 function playContext_get(playList) {
-	let ctx = playContextMap.get(playList.key)
+	let ctx = playState.playContextMap.get(playList.key)
 	if (!ctx) {
 		ctx = { data:playList, currentPlayingItem:undefined, currentViewingItem:undefined, playOrder:[], playOrderMap:new Map(), shuffled:false }
 		playContext_resetPlayOrder(ctx)
@@ -9,20 +9,20 @@ function playContext_get(playList) {
 			ctx.shuffled = true
 			playContext_shufflePlayOrder(ctx)
 		}
-		playContextMap.set(playList.key, ctx)
+		playState.playContextMap.set(playList.key, ctx)
 	}
 	return ctx
 }
 function playContext_copyFromView() {
-	playContextStack = viewContextStack.slice()
-	for (let i = 0; i < playContextStack.length; ++i) {
-		playContextStack[i].currentPlayingItem = playContextStack[i].currentViewingItem
+	playState.playContextStack = playState.viewContextStack.slice()
+	for (let i = 0; i < playState.playContextStack.length; ++i) {
+		playState.playContextStack[i].currentPlayingItem = playState.playContextStack[i].currentViewingItem
 	}
 }
 function playContext_copyFromPlay() {
-	viewContextStack = playContextStack.slice()
-	for (let i = 0; i < viewContextStack.length; ++i) {
-		viewContextStack[i].currentViewingItem = viewContextStack[i].currentPlayingItem
+	playState.viewContextStack = playState.playContextStack.slice()
+	for (let i = 0; i < playState.viewContextStack.length; ++i) {
+		playState.viewContextStack[i].currentViewingItem = playState.viewContextStack[i].currentPlayingItem
 	}
 }
 function playContext_getCurrentPlayKey(ctx) {
@@ -44,13 +44,13 @@ function playContext_play_r(ctx) {
 		playVideoData(data)
 	} else if (data.type == 2) {
 		const ctx = playContext_get(data)
-		if (playContextStack.indexOf(ctx) != -1) {
+		if (playState.playContextStack.indexOf(ctx) != -1) {
 			return false
 		}
 		if (ctx.playOrder.length == 0) {
 			return false
 		}
-		playContextStack.push(ctx)
+		playState.playContextStack.push(ctx)
 		return playContext_play_r(ctx)
 	}
 	return true
@@ -65,7 +65,7 @@ function playContext_playOrOpen_r(ctx, doPlay) {
 		}
 	} else if (data.type == 2) {
 		const ctx = playContext_get(data)
-		if (viewContextStack.indexOf(ctx) != -1) {
+		if (playState.viewContextStack.indexOf(ctx) != -1) {
 			return false
 		}
 		playList_push(data)
@@ -130,27 +130,27 @@ function playContext_resetPlayOrder(playContext) {
 	playContext_refreshPlayerOrderMap(playContext)
 }
 function updatePlayerOrder() {
-	const playOrder = currentViewContext.playOrder
-	const playOrderMap = currentViewContext.playOrderMap
+	const playOrder = playState.currentViewContext.playOrder
+	const playOrderMap = playState.currentViewContext.playOrderMap
 	const newPlayOrder = []
 	for (let i = 0; i < playOrder.length; ++i) {
 		if (playListItemsTable.getDataByKey(playOrder[i].key)) {
 			newPlayOrder.push(playOrder[i])
 		}
 	}
-	currentViewContext.playOrder = newPlayOrder
-	playContext_refreshPlayerOrderMap(currentViewContext)
+	playState.currentViewContext.playOrder = newPlayOrder
+	playContext_refreshPlayerOrderMap(playState.currentViewContext)
 }
 function playList_shufflePlayOrder() {
-	playContext_shufflePlayOrder(currentViewContext)
+	playContext_shufflePlayOrder(playState.currentViewContext)
 	playListItemsTable.updateList()
 }
 function playList_resetPlayOrder() {
-	playContext_resetPlayOrder(currentViewContext)
+	playContext_resetPlayOrder(playState.currentViewContext)
 	playListItemsTable.updateList()
 	}
 function playList_shuffle() {
-	const sufflePlayList = currentViewContext ? currentViewContext.shuffled : false
+	const sufflePlayList = playState.currentViewContext ? playState.currentViewContext.shuffled : false
 	if (sufflePlayList) {
 		playList_shufflePlayOrder()
 	} else {
