@@ -24,6 +24,9 @@ class MultiColumnList {
 		this._headerFilterItems = []
 		this._filterFunction = null
 		this.selectMode = false
+		this._virtualTotal = 0
+		this._virtualStart = 0
+		this._virtualEnd = -1
 	  
 		let obj = this
 		let tblWrap = document.createElement('div')
@@ -75,7 +78,12 @@ class MultiColumnList {
 		}
 		
 		let tblBody = document.createElement('table');
-		userTbl.appendChild(tblBody)
+		let virtualContainer = document.createElement('div')
+		virtualContainer.style.position = 'relative'
+		tblBody.style.position = 'absolute'
+		tblBody.style.width = '100%'
+		virtualContainer.appendChild(tblBody)
+		userTbl.appendChild(virtualContainer)
 		tblWrap.appendChild(userTbl)
 		
 		let sl = 0
@@ -84,7 +92,15 @@ class MultiColumnList {
 				sl = userTbl.scrollLeft;
 				userTblHead.scrollTo(sl, 0);
 			}
+			obj._onVirtualScroll()
 		}
+		userTbl.addEventListener('wheel', function(e) {
+			e.preventDefault()
+			let delta = e.deltaY
+			if (e.deltaMode === 1) delta *= 20
+			else if (e.deltaMode === 2) delta *= userTbl.clientHeight
+			userTbl.scrollTop += delta
+		}, { passive: false })
 		tblBody.ondblclick = function(e) {
 			/*
 			let element = document.elementFromPoint(e.clientX, e.clientY)
@@ -185,8 +201,9 @@ class MultiColumnList {
 		this.userTbl = userTbl
 		this.tblHeader = tblHeader
 		this.tblBody = tblBody
+		this._virtualContainer = virtualContainer
 
-		new ResizeObserver(() => this.adjustScroll()).observe(userTbl)
+		new ResizeObserver(() => { this.adjustScroll(); this._renderVirtualWindow() }).observe(userTbl)
 		
 		let _divFilter = document.createElement('div')
 		document.body.appendChild(_divFilter);
@@ -458,7 +475,7 @@ class MultiColumnList {
 		}
 	}
 	clampRowIndex(idx) {
-		let len = this.tblBody.rows.length
+		let len = this._virtualTotal
 		if (idx < 0) {
 			return 0
 		} else if (len <= idx) {
@@ -470,7 +487,7 @@ class MultiColumnList {
 		return idx
 	}
 	get rowCount() {
-		return this.tblBody.rows.length
+		return this._virtualTotal
 	}
 	get length() {
 		return this._data.length
@@ -497,7 +514,7 @@ class MultiColumnList {
 	}
 	setRowSelection(dataKey, focusOption) {
 		let rowIdx = this.getRowIndex(dataKey)
-		if (rowIdx < 0 || this.tblBody.rows.length <= rowIdx) {
+		if (rowIdx < 0 || this._virtualTotal <= rowIdx) {
 			this._selectedDataKey = undefined
 		} else {
 			this.clearSelection()
@@ -515,9 +532,18 @@ class MultiColumnList {
 	}
 	scrollToRow(rowIdx, option) {
 		if (rowIdx < 0) {
-			rowIdx = this.tblBody.rows.length + rowIdx
+			rowIdx = this._virtualTotal + rowIdx
 		}
-		this.tblBody.rows[rowIdx].scrollIntoViewIfNeeded(option)
+		rowIdx = Math.max(0, Math.min(this._virtualTotal - 1, rowIdx))
+		const targetTop = rowIdx * 20
+		const currentTop = this.userTbl.scrollTop
+		const clientHeight = this.userTbl.clientHeight
+		if (!option || targetTop < currentTop) {
+			this.userTbl.scrollTop = targetTop
+		} else if (targetTop + 20 > currentTop + clientHeight) {
+			this.userTbl.scrollTop = targetTop + 20 - clientHeight
+		}
+		this._renderVirtualWindow()
 	}
 	scrollToRowByDataKey(dataKey, option) {
 		let rowIdx = this.getRowIndex(dataKey)
@@ -785,6 +811,50 @@ class MultiColumnList {
 		}
 		this.tblHeader.style.minWidth = width + 'px'
 	}
+	_getDomRow(logicalIdx) {
+		if (logicalIdx < this._virtualStart || logicalIdx > this._virtualEnd) return null
+		return this.tblBody.rows[logicalIdx - this._virtualStart]
+	}
+	_renderVirtualWindow() {
+		const scrollTop = this.userTbl.scrollTop
+		const clientHeight = this.userTbl.clientHeight || 300
+		const ROW_HEIGHT = 20
+		const BUFFER = 15
+		const total = this._virtualTotal
+		const firstVisible = Math.floor(scrollTop / ROW_HEIGHT)
+		const lastVisible = Math.ceil((scrollTop + clientHeight) / ROW_HEIGHT)
+		const newStart = Math.max(0, firstVisible - BUFFER)
+		const newEnd = Math.min(total - 1, lastVisible + BUFFER)
+		if (newStart === this._virtualStart && newEnd === this._virtualEnd) return
+		this._virtualStart = newStart
+		this._virtualEnd = newEnd
+		this._virtualContainer.style.height = (total * ROW_HEIGHT) + 'px'
+		this.tblBody.style.top = (newStart * ROW_HEIGHT) + 'px'
+		for (let i = this.tblBody.rows.length - 1; i >= 0; --i) {
+			this.tblBody.deleteRow(i)
+		}
+		for (let i = newStart; i <= newEnd; ++i) {
+			const key = this.getDataKeyByRowIndex(i)
+			if (key) {
+				const dataIdx = this._dataIndexMap.get(key)
+				if (dataIdx != undefined) {
+					this._insertRow(key, dataIdx, i - newStart)
+				}
+			}
+		}
+		this._refreshSelectionStyles()
+	}
+	_refreshSelectionStyles() {
+		for (let i = this._virtualStart; i <= this._virtualEnd; ++i) {
+			const row = this.tblBody.rows[i - this._virtualStart]
+			if (!row) continue
+			const key = this.getDataKeyByRowIndex(i)
+			row.setAttribute('selected', key != null && this._selectedDataKeys.indexOf(key) !== -1)
+		}
+	}
+	_onVirtualScroll() {
+		this._renderVirtualWindow()
+	}
 	getOnDblClick() {
 		let obj = this
 		return function(e) {
@@ -905,23 +975,25 @@ class MultiColumnList {
 		}
 	}
 	setRowSelectionStyle(rowIdx) {
-		this.tblBody.rows[rowIdx].setAttribute('selected', true)
+		const row = this._getDomRow(rowIdx)
+		if (row) row.setAttribute('selected', true)
 	}
 	clearRowSelectionStyle(rowIdx) {
-		this.tblBody.rows[rowIdx].setAttribute('selected', false)
+		const row = this._getDomRow(rowIdx)
+		if (row) row.setAttribute('selected', false)
 	}
 	selectAll() {
-		if (this._data.length <= 0) {
+		if (this._virtualTotal <= 0) {
 			return
 		}
 		this._selectedDataKeys = []
-		for (let i = 0; i < this._data.length; ++i) {
-			this._selectedDataKeys.push(this._data[i].key)
-			this.setRowSelectionStyle(i)
+		for (let i = 0; i < this._virtualTotal; ++i) {
+			const key = this.getDataKeyByRowIndex(i)
+			if (key) this._selectedDataKeys.push(key)
 		}
-
-		this._selectedDataKey = this._data[0].key
-		this._selectedDataStartKey = this._data[0].key
+		this._selectedDataKey = this.getDataKeyByRowIndex(0)
+		this._selectedDataStartKey = this.getDataKeyByRowIndex(0)
+		this._refreshSelectionStyles()
 	}
 	clearSelection() {
 		for (let i = 0; i < this._selectedDataKeys.length; ++i) {
@@ -978,58 +1050,10 @@ class MultiColumnList {
 	setDataOrder(newDataOrder) {
 		if (this._deferredRefresh) {
 			this._dataOrder = newDataOrder
-			return 
-		}
-		if (this._dataOrder == newDataOrder || newDataOrder == null) {
-			this._dataOrder = newDataOrder
-			this.refreshList()
 			return
 		}
-		if (this._dataOrder == null) {
-			this._dataOrder = newDataOrder
-			this.refreshList()
-			return
-		}
-		let selectedDataKeys = this._selectedDataKeys
-		this._selectedDataKeys = []
-		
-		this._rowOrderMap.clear()
-		let oldDataOrder = this._dataOrder
 		this._dataOrder = newDataOrder
-		let len = Math.min(newDataOrder.length, oldDataOrder.length)
-		for (let i = 0; i < len; ++i) {
-			let key = newDataOrder[i]
-			this._rowOrderMap.set(key, i)
-			if (oldDataOrder[i] == key) {
-				this.updateRow(key, i)
-				continue
-			}
-			this.tblBody.deleteRow(i)
-			let dataIdx = this._dataIndexMap.get(key)
-			if (dataIdx != undefined) {
-				this._insertRow(key, dataIdx, i)
-			}
-		}
-		
-		for (let i = this.rowCount - 1; i >= len; --i) {
-			this.tblBody.deleteRow(i)
-		}
-		for (let i = len; i < newDataOrder.length; ++i) {
-			let key = newDataOrder[i]
-			this._rowOrderMap.set(key, i)
-			let dataIdx = this._dataIndexMap.get(key)
-			if (dataIdx != undefined) {
-				this._insertRow(key, dataIdx, i)
-			}
-		}
-		this.adjustScroll()
-		for (let i = 0; i < selectedDataKeys.length; ++i) {
-			let key = selectedDataKeys[i]
-			let idx = this.getRowIndex(key)
-			if (idx != -1) {
-				this._setRowSelection(key, idx)
-			}
-		}
+		this.refreshList()
 	}
 	refreshDataIndexMap() {
 		const _dataIndexMap = this._dataIndexMap
@@ -1060,46 +1084,38 @@ class MultiColumnList {
 		if (this._deferredRefresh) {
 			return
 		}
-		let selectedDataKeys = this._selectedDataKeys
+		const selectedDataKeys = this._selectedDataKeys
 		this._selectedDataKeys = []
-		
-		let rows = this.rows
-		for (let i = rows.length - 1; i >= 0; --i) {
-			this.tblBody.deleteRow(i)
-		}
 		this._rowOrderMap.clear()
-		
 		if (this._dataOrder) {
-			let dataOrder = this._dataOrder
 			let newDataOrder = []
-			let rowIdx = 0
-			for (let i = 0; i < dataOrder.length; ++i) {
-				let key = dataOrder[i]
-				let dataIdx = this._dataIndexMap.get(key)
-				if (dataIdx != undefined) {
-					this._rowOrderMap.set(key, rowIdx)
-					this._insertRow(key, dataIdx, rowIdx)
+			let logicalIdx = 0
+			for (let i = 0; i < this._dataOrder.length; ++i) {
+				const key = this._dataOrder[i]
+				if (this._dataIndexMap.get(key) != undefined) {
+					this._rowOrderMap.set(key, logicalIdx++)
 					newDataOrder.push(key)
-					++rowIdx
 				}
 			}
 			this._dataOrder = newDataOrder
+			this._virtualTotal = newDataOrder.length
 		} else {
-			let data = this._data
+			const data = this._data
 			for (let i = 0; i < data.length; ++i) {
-				let key = data[i].key
-				this._rowOrderMap.set(key, i)
-				this._insertRow(key, i, i)
+				this._rowOrderMap.set(data[i].key, i)
 			}
+			this._virtualTotal = data.length
 		}
+		this._virtualStart = -1
+		this._virtualEnd = -1
+		this._renderVirtualWindow()
 		this.adjustScroll()
-		for (let i = 0; i < selectedDataKeys.length; ++i) {
-			let key = selectedDataKeys[i]
-			let idx = this.getRowIndex(key)
-			if (idx != -1) {
-				this._setRowSelection(key, idx)
+		for (const key of selectedDataKeys) {
+			if (this._rowOrderMap.has(key)) {
+				this._selectedDataKeys.push(key)
 			}
 		}
+		this._refreshSelectionStyles()
 	}
 	getDataIndexesByKeys(keys) {
 		let dataIndexes = []
@@ -1374,7 +1390,7 @@ class MultiColumnList {
 		let obj = this
 		return function(e) {
 			obj.tblWrap.focus()
-			obj._selectRow(dataKey, this.rowIndex, e.shiftKey, e.ctrlKey || obj.selectMode)
+			obj._selectRow(dataKey, obj.getRowIndex(dataKey), e.shiftKey, e.ctrlKey || obj.selectMode)
 		}
 	}
 	_insertRow(dataKey, dataIdx, rowIdx) {
@@ -1432,7 +1448,7 @@ class MultiColumnList {
 		row.addEventListener('contextmenu', function(event) {
 			if (obj.oncontextmenu) {
 				if (!obj.isSelectedRow(dataKey)) {
-					obj._selectRow(dataKey, rowIdx, event.shiftKey, event.ctrlKey)
+					obj._selectRow(dataKey, obj.getRowIndex(dataKey), event.shiftKey, event.ctrlKey)
 				}
 				obj.oncontextmenu(event, dataKey)
 			}
@@ -1453,7 +1469,8 @@ class MultiColumnList {
 		}
 	}
 	updateRow(dataKey, rowIdx) {
-		let row = this.tblBody.rows[rowIdx]
+		const row = this._getDomRow(rowIdx)
+		if (!row) return
 		let cells = row.cells
 		let dataIdx = this.getDataIndexByKey(dataKey)
 		let data = this.getData(dataIdx)
@@ -1474,9 +1491,9 @@ class MultiColumnList {
 		}
 	}
 	updateList() {
-		let rows = this.tblBody.rows
-		for (let i = 0; i < rows.length; ++i) {
-			this.updateRow(this.getDataKeyByRowIndex(i), i)
+		for (let i = this._virtualStart; i <= this._virtualEnd; ++i) {
+			const key = this.getDataKeyByRowIndex(i)
+			if (key) this.updateRow(key, i)
 		}
 	}
 	focus() {
