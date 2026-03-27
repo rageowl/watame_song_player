@@ -132,12 +132,13 @@ class MultiColumnList {
 				}
 				element = element.parentElement
 			}
-			
-			const rowIndex = element.rowIndex
-			if (!obj.isValidRowIndex(rowIndex) || obj.rows[rowIndex] != element) {
+
+			const domRowIndex = element.rowIndex
+			const logicalRowIndex = domRowIndex + obj._virtualStart
+			if (!obj.isValidRowIndex(logicalRowIndex) || obj.rows[domRowIndex] != element) {
 				return
 			}
-			const dataKey = obj.getDataKeyByRowIndex(rowIndex)
+			const dataKey = obj.getDataKeyByRowIndex(logicalRowIndex)
 			obj._pointerDownElement = element
 			obj._pointerPressed = true
 			obj._isDragged = false
@@ -147,9 +148,10 @@ class MultiColumnList {
 		tblBody.onmousemove = function(e) {
 			if (obj._pointerPressed && !obj._canDragStart) {
 				if (!obj._isDragged && obj._pointerDownElement) {
-					const rowIndex = obj._pointerDownElement.rowIndex
-					const dataKey = obj.getDataKeyByRowIndex(rowIndex)
-					obj._selectRow(dataKey, rowIndex, e.shiftKey, e.ctrlKey || obj.selectMode)
+					const domRowIndex = obj._pointerDownElement.rowIndex
+					const logicalRowIndex = domRowIndex + obj._virtualStart
+					const dataKey = obj.getDataKeyByRowIndex(logicalRowIndex)
+					obj._selectRow(dataKey, logicalRowIndex, e.shiftKey, e.ctrlKey || obj.selectMode)
 				}
 				let element = document.elementFromPoint(e.clientX, e.clientY)
 				while (true) {
@@ -161,12 +163,13 @@ class MultiColumnList {
 					}
 					element = element.parentElement
 				}
-				const rowIndex = element.rowIndex
-				if (!obj.isValidRowIndex(rowIndex) || obj.rows[rowIndex] != element) {
+				const domRowIndex = element.rowIndex
+				const logicalRowIndex = domRowIndex + obj._virtualStart
+				if (!obj.isValidRowIndex(logicalRowIndex) || obj.rows[domRowIndex] != element) {
 					return
 				}
-				const dataKey = obj.getDataKeyByRowIndex(rowIndex)
-				obj._selectRow(dataKey, rowIndex, true, e.ctrlKey)
+				const dataKey = obj.getDataKeyByRowIndex(logicalRowIndex)
+				obj._selectRow(dataKey, logicalRowIndex, true, e.ctrlKey)
 				obj._isDragged = true
 			}
 		}
@@ -175,12 +178,13 @@ class MultiColumnList {
 				if (!obj._isDragged && obj._pointerDownElement) {
 					let rc = obj._pointerDownElement.getBoundingClientRect()
 					if (rc.left <= e.clientX && e.clientX < rc.right && rc.top <= e.clientY && e.clientY < rc.bottom) {
-						const rowIndex = obj._pointerDownElement.rowIndex
-						const dataKey = obj.getDataKeyByRowIndex(rowIndex)
+						const domRowIndex = obj._pointerDownElement.rowIndex
+						const logicalRowIndex = domRowIndex + obj._virtualStart
+						const dataKey = obj.getDataKeyByRowIndex(logicalRowIndex)
 						if (e.button == 2 && obj.isSelectedRow(dataKey)) {
 							obj._selectedDataKey = dataKey
 						} else if (!obj.selectMode) {
-							obj._selectRow(dataKey, rowIndex, e.shiftKey, e.ctrlKey)
+							obj._selectRow(dataKey, logicalRowIndex, e.shiftKey, e.ctrlKey)
 						}
 					}
 				}
