@@ -169,19 +169,14 @@ function panel_create(playList) {
 
 	// 타이틀 바
 	const titleBar = document.createElement('div')
-	titleBar.style.cssText = 'flex: none; display: flex; align-items: center; background: #333; padding: 2px 4px; gap: 4px;'
-	const titleEl = document.createElement('span')
-	titleEl.style.cssText = 'flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9em;'
-	titleEl.textContent = playList ? (playList.trackName + ' / ' + playList.originalArtist) : ''
+	titleBar.style.cssText = 'flex: none; display: flex; align-items: center; background: #446688; padding: 2px 4px; gap: 4px;'
+	const pathEl = document.createElement('div')
+	pathEl.style.cssText = 'flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9em;'
 	const closeBtn = document.createElement('button')
 	closeBtn.textContent = '✕'
 	closeBtn.style.cssText = 'flex: none; cursor: pointer; padding: 0 4px;'
-	titleBar.appendChild(titleEl)
+	titleBar.appendChild(pathEl)
 	titleBar.appendChild(closeBtn)
-
-	// breadcrumb div
-	const pathEl = document.createElement('div')
-	pathEl.style.cssText = 'flex: none; padding: 1px 4px; min-height: 1.2em; font-size: 0.85em;'
 
 	// 테이블 컨테이너
 	const tableContainer = document.createElement('div')
@@ -191,7 +186,6 @@ function panel_create(playList) {
 	tableContainer.appendChild(tableDiv)
 
 	panelDiv.appendChild(titleBar)
-	panelDiv.appendChild(pathEl)
 	panelDiv.appendChild(tableContainer)
 
 	// 테이블 생성
@@ -205,7 +199,6 @@ function panel_create(playList) {
 		id: panelId,
 		div: panelDiv,
 		table: table,
-		titleEl: titleEl,
 		pathEl: pathEl,
 		viewContextStack: [],
 	}
@@ -305,9 +298,6 @@ function playList_push(playList) {
 }
 function playList_setPage(playList) {
 	playState.currentViewContext = playContext_get(playList)
-	if (playState.activePanel) {
-		playState.activePanel.titleEl.textContent = playList.trackName + ' / ' + playList.originalArtist
-	}
 	playListItemsTable.setData(playList.items)
 	playList_checkBoxShuffle.checked = playList.shuffle
 	playList_checkBoxPlayEntireList.checked = playList.entirePlay

@@ -84,12 +84,12 @@
 	
 let playListHeaders = [
 		{ name:'', width:40, getter:function(d) {
-			if (d.key == playState.currentViewContext.data.key) {
+			if (playState.currentViewContext && d.key == playState.currentViewContext.data.key) {
 				for (let i = 0; i < playState.playContextStack.length; ++i) {
 					if (d.key == playState.playContextStack[i].data.key) {
 						return '\u25b6'
 					}
-				}	
+				}
 			}
 			return ''
 		}},
@@ -269,6 +269,11 @@ let playListHeaders = [
 		itemSelect.setElements('Select')
 		itemSelect.onclick = function() {
 			playList_open(playListTable.getDataByKey(playListTable.selectedDataKey))
+		}
+		let itemOpenInNewPanel = playListContextMenu.addItem()
+		itemOpenInNewPanel.setElements('Open in New Panel')
+		itemOpenInNewPanel.onclick = function() {
+			playList_openInNewPanel(playListTable.getDataByKey(playListTable.selectedDataKey))
 		}
 		let itemSearchContaining = playListContextMenu.addItem()
 		itemSearchContaining.setElements('Search for Playlists Containing Item')
@@ -649,14 +654,14 @@ let playListHeaders = [
 		itemCopyToClipboard.setElements(createSpan('CopyToClipboard', 'flex:1;'), createSpan('>', 'flex:none;'))
 		let menuCopyToClipboard = itemCopyToClipboard.setSubMenu()
 
-		let headers = playListItemsTable.headers;
+		let headers = panel_createHeaders(null);
 		for (let i = 0; i < headers.length; ++i) {
 			let headerName = headers[i].name;
 			let copyElement = menuCopyToClipboard.addItem();
 			copyElement.setElements(headerName);
 			copyElement.onclick = function() {
 				copySelectedItemsToClipboard(playListItemsTable, [headerName]);
-			}	
+			}
 		}
 		/*
 		let itemTest1 = playListItemsContextMenu.addItem()
