@@ -247,17 +247,9 @@ let playListHeaders = [
 		}
 
 		let itemCopyToClipboard = totalListContextMenu.addItem()
-		itemCopyToClipboard.setElements(createSpan('CopyToClipboard', 'flex:1;'), createSpan('>', 'flex:none;'))
-		let menuCopyToClipboard = itemCopyToClipboard.setSubMenu()
-
-		let headers = videoClipTable.headers;
-		for (let i = 0; i < headers.length; ++i) {
-			let headerName = headers[i].name;
-			let copyElement = menuCopyToClipboard.addItem();
-			copyElement.setElements(headerName);
-			copyElement.onclick = function() {
-				copySelectedItemsToClipboard(videoClipTable, [headerName]);
-			}	
+		itemCopyToClipboard.setElements('CopyToClipboard')
+		itemCopyToClipboard.onclick = function() {
+			showCopyToClipboardDialog(videoClipTable)
 		}
 	}
 	{
@@ -344,17 +336,9 @@ let playListHeaders = [
 		}
 
 		let itemCopyToClipboard = playListContextMenu.addItem()
-		itemCopyToClipboard.setElements(createSpan('CopyToClipboard', 'flex:1;'), createSpan('>', 'flex:none;'))
-		let menuCopyToClipboard = itemCopyToClipboard.setSubMenu()
-
-		let headers = playListTable.headers;
-		for (let i = 0; i < headers.length; ++i) {
-			let headerName = headers[i].name;
-			let copyElement = menuCopyToClipboard.addItem();
-			copyElement.setElements(headerName);
-			copyElement.onclick = function() {
-				copySelectedItemsToClipboard(playListTable, [headerName]);
-			}	
+		itemCopyToClipboard.setElements('CopyToClipboard')
+		itemCopyToClipboard.onclick = function() {
+			showCopyToClipboardDialog(playListTable)
 		}
 	}
 	{
@@ -651,17 +635,9 @@ let playListHeaders = [
 		}
 		
 		let itemCopyToClipboard = playListItemsContextMenu.addItem()
-		itemCopyToClipboard.setElements(createSpan('CopyToClipboard', 'flex:1;'), createSpan('>', 'flex:none;'))
-		let menuCopyToClipboard = itemCopyToClipboard.setSubMenu()
-
-		let headers = panel_createHeaders(null);
-		for (let i = 0; i < headers.length; ++i) {
-			let headerName = headers[i].name;
-			let copyElement = menuCopyToClipboard.addItem();
-			copyElement.setElements(headerName);
-			copyElement.onclick = function() {
-				copySelectedItemsToClipboard(playListItemsTable, [headerName]);
-			}
+		itemCopyToClipboard.setElements('CopyToClipboard')
+		itemCopyToClipboard.onclick = function() {
+			showCopyToClipboardDialog(playListItemsTable)
 		}
 		/*
 		let itemTest1 = playListItemsContextMenu.addItem()

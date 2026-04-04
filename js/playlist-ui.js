@@ -535,6 +535,38 @@ function copySelectedItemsToClipboard(list, selectedColumnNames=null) {
 	}
 	navigator.clipboard.writeText(text).then(() => list.focus())
 }
+function showCopyToClipboardDialog(list) {
+	const container = copyToClipboardDialog_checkboxes
+	container.replaceChildren()
+	const headers = list.headers.filter(h => h.name && h.name.length > 0)
+	for (let i = 0; i < headers.length; ++i) {
+		const label = document.createElement('label')
+		label.style.cursor = 'pointer'
+		const cb = document.createElement('input')
+		cb.type = 'checkbox'
+		cb.checked = true
+		cb.value = headers[i].name
+		label.appendChild(cb)
+		label.appendChild(document.createTextNode(' ' + headers[i].name))
+		container.appendChild(label)
+	}
+	copyToClipboardDialog.onclose = function() {
+		if (copyToClipboardDialog.returnValue == 'ok') {
+			const selected = []
+			container.querySelectorAll('input[type=checkbox]').forEach(cb => {
+				if (cb.checked) selected.push(cb.value)
+			})
+			if (selected.length > 0) {
+				copySelectedItemsToClipboard(list, selected)
+			}
+		}
+	}
+	if (typeof copyToClipboardDialog.showModal === 'function') {
+		copyToClipboardDialog.showModal()
+	} else {
+		alert('The <dialog> API is not supported by this browser')
+	}
+}
 function playListItemsTable_selectAll() {
 	playListItemsTable.selectAll()
 }

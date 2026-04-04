@@ -317,5 +317,20 @@
 				</menu>
 			</form>
 		</dialog>
+		<dialog id="copyToClipboardDialog">
+			<form method="dialog">
+				<div style="display:flex;gap:4px;margin-bottom:4px;">
+					<button type="button" onclick="copyToClipboardDialog_checkboxes.querySelectorAll('input').forEach(cb=>cb.checked=true)">모두 선택</button>
+					<button type="button" onclick="copyToClipboardDialog_checkboxes.querySelectorAll('input').forEach(cb=>cb.checked=false)">모두 해제</button>
+				</div>
+				<div id="copyToClipboardDialog_checkboxes" style="display:flex;flex-direction:column;gap:4px;max-height:300px;overflow-y:auto;margin-bottom:8px;"></div>
+				<menu>
+					<div style="display:flex;flex-direction:row-reverse;">
+						<button value="ok" style="margin-left:4px;">OK</button>
+						<button value="cancel">Cancel</button>
+					</div>
+				</menu>
+			</form>
+		</dialog>
 	</body>
 </html>
