@@ -64,7 +64,7 @@
 	}
 
 	videoClipTable.onkeydown = function(e) {
-		if (e.keyCode == 13 && showPlaylistItems.checked) {
+		if (e.keyCode == 13 && playState.activePanel) {
 		   totalList_addSelectedToPlaylist()
 		} else if (e.ctrlKey && e.keyCode == 67) {
 			copySelectedItemsToClipboard(videoClipTable)
@@ -82,142 +82,7 @@
 		totalListContextMenu.show(event.clientX, event.clientY)
 	}
 	
-	let playListDetailHeaders = [
-		{ name:'', width:40, getter:function(d) {
-			for (let i = 0; i < playState.playContextStack.length; ++i) {
-				if (d.key == playState.playContextStack[i].currentPlayingItem.key) {
-					return '\u25b6'
-				}
-			}
-			if (playState.viewContextStack.length > 0 && playState.viewContextStack[playState.viewContextStack.length - 1].currentPlayingItem && d.key == playState.viewContextStack[playState.viewContextStack.length - 1].currentPlayingItem.key) {
-				return '\u25b7'
-			}
-			return ''
-		}},
-		{ name:'Order', width:80, title:"Play Order", filter:true, sort:true, numeric:true, getter:function(d) {
-			return playState.currentViewContext.playOrderMap.get(d.key) + 1
-		}},
-		{ name:'Type', width:80, filter:true, sort:true, getter:function(d) { return d.data.type == 1 ? '🎶' : '📁' } },
-		{ name:'Date', width:110, filter:true, sort:true, getter:function(d) { return d.data.date } },
-		{ name:'Track Name', width:400, filter:true, sort:true, getter:function(d) { return d.data.trackName }, autoSize:true },
-		{ name:'Original Artist', width:160, filter:true, sort:true, getter:function(d) { return d.data.originalArtist } },
-		{ name:'Covered By', width:128, filter:true, sort:true, getter:function(d) { return d.data.coveredBy } },
-		{ name:'Category', width:120, filter:true, sort:true, getter:function(d) { return d.data.category } },
-		{ name:'ShufflePriority', width:150, filter:true, sort:true, numeric:true, getter:function(d) { return d.shufflePriority } },
-		{ name:'Ordinal', width:88, id:'ordinal', filter:true, sort:true, numeric:true, getter:function(item) { return playListItem_getOrdinal(item) } },
-	]
-	playListItemsTable = new MultiColumnList(playListDetail)
-	playListItemsTable.selectMode = isMobile.any() != null
-	playListItemsTable.mainDivClassName = 'tblWrap'
-	playListItemsTable.headerDivClassName = 'userTblHead'
-	playListItemsTable.bodyDivClassName = 'userTbl'
-	playListItemsTable.ondblclick = function(e) {
-		playListItemsTable_playOrOpen(this.selectedDataKey, true)
-	}
-	playListItemsTable.onkeydown = function(e) {
-		if (e.keyCode == 46) {
-			playListItemsTable_deleteSelected()
-		} else if (e.ctrlKey && e.keyCode == 67) {
-			copySelectedItemsToClipboard(playListItemsTable)
-		}
-	}
-	playListItemsTable.draggable = true
-	playListItemsTable.ondragstart = function(e, dataKey) {
-		let keys = playListItemsTable.selectedDataKeys
-		let data = JSON.stringify(keys)
-		e.dataTransfer.setData("wnfplayitem", data);
-		e.dataTransfer.dropEffect = "move"
-	}
-	playListItemsTable.ondrop = function(e, dataKey, front) {
-		e.preventDefault();
-		let data
-		if (data = e.dataTransfer.getData("wnfvideoclip")) {
-			let keys = JSON.parse(data)
-			if (keys.length == 0) {
-				return
-			}
-			const playList = playState.currentViewContext.data
-			playListItemsTable.beginUpdate()
-			for (let i = 0; i < keys.length; ++i) {
-				let data = videoClipTable.getDataByKey(keys[i])
-				let item = playList_insertItem(playList, data, dataKey, front)
-				dataKey = item.key
-				front = false
-			}
-			playListItemsTable.endUpdate()
-			playListTable.updateList()
-			videoClipTable.updateList()
-			setDataChanged()
-		} else if (data = e.dataTransfer.getData("wnfplayitem")) {
-			let keys = JSON.parse(data)
-			removeItemOnce(keys, dataKey)
-			if (keys.length == 0) {
-				return
-			}
-			//console.log(keys)
-			playListItemsTable.beginUpdate()
-			let deletedDataList = playListItemsTable.deleteDataByKeys(keys)
-			playListItemsTable.insertDataList(deletedDataList, dataKey, front)
-			playListItemsTable.endUpdate()
-			setDataChanged()
-		} else if (data = e.dataTransfer.getData("wnfplaylist")) {
-			let keys = JSON.parse(data)
-			if (keys.length == 0) {
-				return
-			}
-			const playList = playState.currentViewContext.data
-			playListItemsTable.beginUpdate()
-			for (let i = 0; i < keys.length; ++i) {
-				let data = playListTable.getDataByKey(keys[i])
-				let item = playList_insertItem(playList, data, dataKey, front)
-				dataKey = item.key
-				front = false
-			}
-			playListItemsTable.endUpdate()
-			playListTable.updateList()
-			videoClipTable.updateList()
-			setDataChanged()
-		}
-		playListItemsTable_updatePlayOrder()
-	}
-	playListItemsTable.ondragover = function(e, dataKey) {
-		let types = e.dataTransfer.types
-		for (let i = 0; i < types.length; ++i) {
-			if (types[i] == "wnfvideoclip" || types[i] == 'wnfplayitem' || types[i] == 'wnfplaylist') {
-				e.preventDefault()
-				return true
-			}
-		}
-		return false
-	}
-	playListItemsTable.ondragenter = function(e, dataKey) {
-		let types = e.dataTransfer.types
-		for (let i = 0; i < types.length; ++i) {
-			if (types[i] == "wnfvideoclip" || types[i] == 'wnfplayitem' || types[i] == 'wnfplaylist') {
-				e.preventDefault()
-				return
-			}
-		}
-	}
-	playListItemsTable.ondragleave = function(e, dataKey) {
-		let types = e.dataTransfer.types
-		for (let i = 0; i < types.length; ++i) {
-			if (types[i] == "wnfvideoclip" || types[i] == 'wnfplayitem' || types[i] == 'wnfplaylist') {
-				e.preventDefault()
-				return
-			}
-		}
-	}
-	playListItemsTable.onSorted = function(t) {
-		playListItemsTable_updatePlayOrder()
-		setDataChanged()
-	}
-	playListItemsTable.oncontextmenu = function(event, d) {
-		event.preventDefault()
-		playListItemsContextMenu.show(event.clientX, event.clientY)
-	}
-	
-	let playListHeaders = [
+let playListHeaders = [
 		{ name:'', width:40, getter:function(d) {
 			if (d.key == playState.currentViewContext.data.key) {
 				for (let i = 0; i < playState.playContextStack.length; ++i) {
@@ -287,7 +152,7 @@
 				return
 			}
 			const playList = playListTable.getDataByKey(dataKey)
-			if (playList != playState.currentViewContext.data) {
+			if (playListItemsTable && playState.currentViewContext && playList != playState.currentViewContext.data) {
 				playListItemsTable.beginUpdate()
 				for (let i = 0; i < keys.length; ++i) {
 					let item = playListItemsTable.getDataByKey(keys[i])
@@ -351,8 +216,7 @@
 		playListContextMenu.show(event.clientX, event.clientY)
 	}
 	videoClipTable.setHeader(totalListHeaders)
-	playListTable.setHeader(playListHeaders)				
-	playListItemsTable.setHeader(playListDetailHeaders)
+	playListTable.setHeader(playListHeaders)
 	
 	updateDivVisible()
 	videoControl.step = 1
@@ -502,6 +366,14 @@
 		itemOpen.setElements('Open')
 		itemOpen.onclick = function() {
 			playListItemsTable_playOrOpen(playListItemsTable.selectedDataKey, false)
+		}
+		let itemOpenInNewPanel = playListItemsContextMenu.addItem()
+		itemOpenInNewPanel.setElements('Open in New Panel')
+		itemOpenInNewPanel.onclick = function() {
+			const item = playListItemsTable.getDataByKey(playListItemsTable.selectedDataKey)
+			if (item && item.data.type == 2) {
+				playList_openInNewPanel(item.data)
+			}
 		}
 		let itemSearch = playListItemsContextMenu.addItem()
 		itemSearch.setElements('Search Playlists')

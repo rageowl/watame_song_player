@@ -25,7 +25,6 @@
 				<input type="button" onClick="importList()" value="Import"/>
 				<label for="showTotallist" style="cursor:pointer"><input id="showTotallist" type="checkbox" checked="true" onClick="updateDivVisible()" style="cursor:pointer">TotalList</label>
 				<label for="showPlaylist" style="cursor:pointer"><input id="showPlaylist" type="checkbox" onClick="updateDivVisible()" style="cursor:pointer">PlayList</label>
-				<label for="showPlaylistItems" style="cursor:pointer"><input id="showPlaylistItems" type="checkbox" onClick="updateDivVisible()" style="cursor:pointer">PlayListItems</label>
 				<label for="showClipTableURL" style="cursor:pointer"><input id="showClipTableURL" type="checkbox" onClick="updateDivVisible()" style="cursor:pointer">ClipSpreadSheets</label>
 				<label for="showTestClipTime" style="cursor:pointer"><input id="showTestClipTime" type="checkbox" onClick="updateDivVisible()" style="cursor:pointer">TestClipTime</label>
 				[Manual Video <a href="https://www.youtube.com/watch?v=f6Nvl9tysug" target="_blank">KR</a> / <a href="https://www.youtube.com/watch?v=hi8T21HbMHA" target="_blank">JP</a>]
@@ -96,37 +95,32 @@
 						<div id="playList"></div>
 					</div>
 				</div>
-				<div id="divPlaylistItemsPanel" style="flex: 1 1 500px; overflow: hidden; display: none; flex-direction: column; margin-bottom: 10px;">
-					<div style="flex:none">
-					<div id="divViewPath"></div>
-						<div>
-							<input type="button" onClick="playListItemsTable.scrollToRowByDataKey(currentViewContext.currentPlayingItem.key, true)" value="ScrollTo"/>
-							<input type="button" onClick="playListItemsTable_selectAll()" value="Select All"/>
-							<input type="button" onClick="playListItemsTable_clearAll()" value="Clear All"/>
-							<input type="button" onClick="playListItemsTable_play(playListItemsTable.selectedDataKey)" value="Play"/>
-							<input type="button" onClick="playListItemsTable_playOrOpen(playListItemsTable.selectedDataKey, false)" value="Open"/>
-							<input type="button" onClick="playListItemsTable_deleteSelected()" value="Delete"/>
-							<input type="button" onClick="playListItemsTable_deleteAll()" value="Delete All"/>
-							<input type="button" onClick="playListItemsTable_moveToFront()" value="Move to front"/>
-							<input type="button" onClick="playListItemsTable_moveToBack()" value="Move to back"/>
-							<input type="button" onClick="playListItemsTable_moveUp()" value="Move up"/>
-							<input type="button" onClick="playListItemsTable_moveDown()" value="Move down"/>
-							<input type="button" onClick="playListItemsTable_modify()" value="Batch Edit"/>
-							<label for="playList_checkBoxShuffle" style="cursor:pointer"><input id="playList_checkBoxShuffle" type="checkbox" style="cursor:pointer" onClick="playList_saveCheckboxes()">Shuffle</label>
-							<label for="playList_checkBoxPlayEntireList" style="cursor:pointer"><input id="playList_checkBoxPlayEntireList" type="checkbox" style="cursor:pointer" onClick="playList_saveCheckboxes()">PlayAll</label>
-						</div>
-						<div style="display:flex">
-							<input style="flex:1" type="search" id="playListItemsButton_search" onKeyUp="searchPlayListItems_onKeyUp()">
-							<div style="flex:none">
-								<button onClick="playListItemsTable_Search()">Search</button>
-								<input id="playListItemsSearchCaseInsensitive" type="checkbox" checked="true">CaseInsensitive</input>
-							</div>
-						</div>
+				<div id="divPlaylistItemsControls" style="flex:none;display:none;">
+					<div>
+						<input type="button" onClick="playListItemsTable_scrollToCurrent()" value="ScrollTo"/>
+						<input type="button" onClick="playListItemsTable_selectAll()" value="Select All"/>
+						<input type="button" onClick="playListItemsTable_clearAll()" value="Clear All"/>
+						<input type="button" onClick="playListItemsTable_play(playListItemsTable.selectedDataKey)" value="Play"/>
+						<input type="button" onClick="playListItemsTable_playOrOpen(playListItemsTable.selectedDataKey, false)" value="Open"/>
+						<input type="button" onClick="playListItemsTable_deleteSelected()" value="Delete"/>
+						<input type="button" onClick="playListItemsTable_deleteAll()" value="Delete All"/>
+						<input type="button" onClick="playListItemsTable_moveToFront()" value="Move to front"/>
+						<input type="button" onClick="playListItemsTable_moveToBack()" value="Move to back"/>
+						<input type="button" onClick="playListItemsTable_moveUp()" value="Move up"/>
+						<input type="button" onClick="playListItemsTable_moveDown()" value="Move down"/>
+						<input type="button" onClick="playListItemsTable_modify()" value="Batch Edit"/>
+						<label for="playList_checkBoxShuffle" style="cursor:pointer"><input id="playList_checkBoxShuffle" type="checkbox" style="cursor:pointer" onClick="playList_saveCheckboxes()">Shuffle</label>
+						<label for="playList_checkBoxPlayEntireList" style="cursor:pointer"><input id="playList_checkBoxPlayEntireList" type="checkbox" style="cursor:pointer" onClick="playList_saveCheckboxes()">PlayAll</label>
 					</div>
-					<div style="flex:1;overflow: hidden;display: flex;">
-						<div id="playListDetail"></div>
+					<div style="display:flex">
+						<input style="flex:1" type="search" id="playListItemsButton_search" onKeyUp="searchPlayListItems_onKeyUp()">
+						<div style="flex:none">
+							<button onClick="playListItemsTable_Search()">Search</button>
+							<input id="playListItemsSearchCaseInsensitive" type="checkbox" checked="true">CaseInsensitive</input>
+						</div>
 					</div>
 				</div>
+				<div id="dynamicPanelsRow" style="flex: 1 1 500px; overflow: hidden; display: none; flex-direction: row; gap: 4px; margin-bottom: 10px;"></div>
 			</div>
 			<div style="flex:none;">
 				<div id="divPlayPath"></div>

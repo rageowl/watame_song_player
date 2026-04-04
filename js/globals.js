@@ -34,6 +34,9 @@ const playState = {
 	playContextMap: new Map(),
 	playContextStack: [],
 	viewContextStack: [],
+	// 동적 패널
+	openPanels: [],
+	activePanel: null,
 	currentVideoClip: null,
 	modePlayList: PLAYMODE_REPEAT_TRACK,
 	// YouTube 플레이어

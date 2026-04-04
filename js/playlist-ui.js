@@ -10,7 +10,286 @@ function playListItem_getOrdinal(item) {
 		? playList_getOrdinal(item.data)
 		: item.data.ordinal
 }
+// ── 동적 패널 관리 ──────────────────────────────────────────────────────────────
+
+let _panelIdCounter = 0
+
+function panel_getCurrentContext(panel) {
+	const stack = panel.viewContextStack
+	return stack.length > 0 ? stack[stack.length - 1] : null
+}
+
+function panel_createHeaders(panel) {
+	return [
+		{ name:'', width:40, getter:function(d) {
+			for (let i = 0; i < playState.playContextStack.length; ++i) {
+				const ctx = playState.playContextStack[i]
+				if (ctx.currentPlayingItem && d.key == ctx.currentPlayingItem.key) {
+					return '\u25b6'
+				}
+			}
+			const vStack = panel.viewContextStack
+			if (vStack.length > 0 && vStack[vStack.length - 1].currentPlayingItem && d.key == vStack[vStack.length - 1].currentPlayingItem.key) {
+				return '\u25b7'
+			}
+			return ''
+		}},
+		{ name:'Order', width:80, title:"Play Order", filter:true, sort:true, numeric:true, getter:function(d) {
+			const vStack = panel.viewContextStack
+			if (vStack.length == 0) return ''
+			const ctx = vStack[vStack.length - 1]
+			const idx = ctx.playOrderMap.get(d.key)
+			return idx !== undefined ? idx + 1 : ''
+		}},
+		{ name:'Type', width:80, filter:true, sort:true, getter:function(d) { return d.data.type == 1 ? '🎶' : '📁' } },
+		{ name:'Date', width:110, filter:true, sort:true, getter:function(d) { return d.data.date } },
+		{ name:'Track Name', width:400, filter:true, sort:true, getter:function(d) { return d.data.trackName }, autoSize:true },
+		{ name:'Original Artist', width:160, filter:true, sort:true, getter:function(d) { return d.data.originalArtist } },
+		{ name:'Covered By', width:128, filter:true, sort:true, getter:function(d) { return d.data.coveredBy } },
+		{ name:'Category', width:120, filter:true, sort:true, getter:function(d) { return d.data.category } },
+		{ name:'ShufflePriority', width:150, filter:true, sort:true, numeric:true, getter:function(d) { return d.shufflePriority } },
+		{ name:'Ordinal', width:88, id:'ordinal', filter:true, sort:true, numeric:true, getter:function(item) { return playListItem_getOrdinal(item) } },
+	]
+}
+
+function panel_initTableHandlers(panel, table) {
+	table.ondblclick = function(e) {
+		playListItemsTable_playOrOpen(this.selectedDataKey, true)
+	}
+	table.onkeydown = function(e) {
+		if (e.keyCode == 46) {
+			playListItemsTable_deleteSelected()
+		} else if (e.ctrlKey && e.keyCode == 67) {
+			copySelectedItemsToClipboard(playListItemsTable)
+		}
+	}
+	table.draggable = true
+	table.ondragstart = function(e, dataKey) {
+		let keys = playListItemsTable.selectedDataKeys
+		let data = JSON.stringify(keys)
+		e.dataTransfer.setData("wnfplayitem", data);
+		e.dataTransfer.dropEffect = "move"
+	}
+	table.ondrop = function(e, dataKey, front) {
+		e.preventDefault();
+		const ctx = panel_getCurrentContext(panel)
+		if (!ctx) return
+		const playList = ctx.data
+		let data
+		if (data = e.dataTransfer.getData("wnfvideoclip")) {
+			let keys = JSON.parse(data)
+			if (keys.length == 0) {
+				return
+			}
+			playListItemsTable.beginUpdate()
+			for (let i = 0; i < keys.length; ++i) {
+				let data = videoClipTable.getDataByKey(keys[i])
+				let item = playList_insertItem(playList, data, dataKey, front)
+				dataKey = item.key
+				front = false
+			}
+			playListItemsTable.endUpdate()
+			playListTable.updateList()
+			videoClipTable.updateList()
+			setDataChanged()
+		} else if (data = e.dataTransfer.getData("wnfplayitem")) {
+			let keys = JSON.parse(data)
+			removeItemOnce(keys, dataKey)
+			if (keys.length == 0) {
+				return
+			}
+			playListItemsTable.beginUpdate()
+			let deletedDataList = playListItemsTable.deleteDataByKeys(keys)
+			playListItemsTable.insertDataList(deletedDataList, dataKey, front)
+			playListItemsTable.endUpdate()
+			setDataChanged()
+		} else if (data = e.dataTransfer.getData("wnfplaylist")) {
+			let keys = JSON.parse(data)
+			if (keys.length == 0) {
+				return
+			}
+			playListItemsTable.beginUpdate()
+			for (let i = 0; i < keys.length; ++i) {
+				let data = playListTable.getDataByKey(keys[i])
+				let item = playList_insertItem(playList, data, dataKey, front)
+				dataKey = item.key
+				front = false
+			}
+			playListItemsTable.endUpdate()
+			playListTable.updateList()
+			videoClipTable.updateList()
+			setDataChanged()
+		}
+		playListItemsTable_updatePlayOrder()
+	}
+	table.ondragover = function(e, dataKey) {
+		let types = e.dataTransfer.types
+		for (let i = 0; i < types.length; ++i) {
+			if (types[i] == "wnfvideoclip" || types[i] == 'wnfplayitem' || types[i] == 'wnfplaylist') {
+				e.preventDefault()
+				return true
+			}
+		}
+		return false
+	}
+	table.ondragenter = function(e, dataKey) {
+		let types = e.dataTransfer.types
+		for (let i = 0; i < types.length; ++i) {
+			if (types[i] == "wnfvideoclip" || types[i] == 'wnfplayitem' || types[i] == 'wnfplaylist') {
+				e.preventDefault()
+				return
+			}
+		}
+	}
+	table.ondragleave = function(e, dataKey) {
+		let types = e.dataTransfer.types
+		for (let i = 0; i < types.length; ++i) {
+			if (types[i] == "wnfvideoclip" || types[i] == 'wnfplayitem' || types[i] == 'wnfplaylist') {
+				e.preventDefault()
+				return
+			}
+		}
+	}
+	table.onSorted = function(t) {
+		playListItemsTable_updatePlayOrder()
+		setDataChanged()
+	}
+	table.oncontextmenu = function(event, d) {
+		event.preventDefault()
+		playListItemsContextMenu.show(event.clientX, event.clientY)
+	}
+}
+
+function panel_create(playList) {
+	const panelId = 'panel_' + (++_panelIdCounter)
+
+	// 패널 외곽 div
+	const panelDiv = document.createElement('div')
+	panelDiv.style.cssText = 'flex: 1 1 500px; min-width: 300px; overflow: hidden; display: flex; flex-direction: column; margin-right: 4px; border: 1px solid #555;'
+
+	// 타이틀 바
+	const titleBar = document.createElement('div')
+	titleBar.style.cssText = 'flex: none; display: flex; align-items: center; background: #333; padding: 2px 4px; gap: 4px;'
+	const titleEl = document.createElement('span')
+	titleEl.style.cssText = 'flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9em;'
+	titleEl.textContent = playList ? (playList.trackName + ' / ' + playList.originalArtist) : ''
+	const closeBtn = document.createElement('button')
+	closeBtn.textContent = '✕'
+	closeBtn.style.cssText = 'flex: none; cursor: pointer; padding: 0 4px;'
+	titleBar.appendChild(titleEl)
+	titleBar.appendChild(closeBtn)
+
+	// breadcrumb div
+	const pathEl = document.createElement('div')
+	pathEl.style.cssText = 'flex: none; padding: 1px 4px; min-height: 1.2em; font-size: 0.85em;'
+
+	// 테이블 컨테이너
+	const tableContainer = document.createElement('div')
+	tableContainer.style.cssText = 'flex: 1; overflow: hidden; display: flex;'
+	const tableDiv = document.createElement('div')
+	tableDiv.style.cssText = 'flex: 1; overflow: hidden;'
+	tableContainer.appendChild(tableDiv)
+
+	panelDiv.appendChild(titleBar)
+	panelDiv.appendChild(pathEl)
+	panelDiv.appendChild(tableContainer)
+
+	// 테이블 생성
+	const table = new MultiColumnList(tableDiv)
+	table.selectMode = isMobile.any() != null
+	table.mainDivClassName = 'tblWrap'
+	table.headerDivClassName = 'userTblHead'
+	table.bodyDivClassName = 'userTbl'
+
+	const panel = {
+		id: panelId,
+		div: panelDiv,
+		table: table,
+		titleEl: titleEl,
+		pathEl: pathEl,
+		viewContextStack: [],
+	}
+
+	panel_initTableHandlers(panel, table)
+	table.setHeader(panel_createHeaders(panel))
+
+	// 클릭 시 활성화
+	panelDiv.addEventListener('mousedown', function() {
+		if (playState.activePanel !== panel) {
+			panel_activate(panel)
+		}
+	})
+
+	// 닫기 버튼
+	closeBtn.onclick = function(e) {
+		e.stopPropagation()
+		panel_close(panel)
+	}
+
+	dynamicPanelsRow.appendChild(panelDiv)
+	playState.openPanels.push(panel)
+
+	return panel
+}
+
+function panel_close(panel) {
+	panel.div.remove()
+	const idx = playState.openPanels.indexOf(panel)
+	if (idx >= 0) playState.openPanels.splice(idx, 1)
+
+	if (playState.activePanel === panel) {
+		const last = playState.openPanels[playState.openPanels.length - 1]
+		if (last) {
+			panel_activate(last)
+		} else {
+			playState.activePanel = null
+			playListItemsTable = null
+			playState.viewContextStack = []
+			playState.currentViewContext = null
+			updateDivVisible()
+			refreshControlPanel()
+		}
+	}
+}
+
+function panel_activate(panel) {
+	playState.activePanel = panel
+	playListItemsTable = panel.table
+	playState.viewContextStack = panel.viewContextStack
+	playState.currentViewContext = panel.viewContextStack.length > 0
+		? panel.viewContextStack[panel.viewContextStack.length - 1]
+		: null
+
+	// 활성 패널 강조
+	for (let p of playState.openPanels) {
+		p.div.style.outline = p === panel ? '2px solid #4af' : 'none'
+	}
+
+	// 글로벌 체크박스 동기화
+	if (playState.currentViewContext) {
+		const pl = playState.currentViewContext.data
+		playList_checkBoxShuffle.checked = pl.shuffle
+		playList_checkBoxPlayEntireList.checked = pl.entirePlay
+	}
+
+	updateDivVisible()
+	refreshControlPanel()
+}
+
+// ── 패널 열기 ──────────────────────────────────────────────────────────────────
+
+function playList_openInNewPanel(playList) {
+	const panel = panel_create(playList)
+	panel_activate(panel)
+	array_clear(playState.viewContextStack)
+	playList_push(playList)
+}
+
 function playList_open(playList) {
+	if (!playState.activePanel) {
+		const panel = panel_create(playList)
+		panel_activate(panel)
+	}
 	array_clear(playState.viewContextStack)
 	playList_push(playList)
 }
@@ -26,6 +305,9 @@ function playList_push(playList) {
 }
 function playList_setPage(playList) {
 	playState.currentViewContext = playContext_get(playList)
+	if (playState.activePanel) {
+		playState.activePanel.titleEl.textContent = playList.trackName + ' / ' + playList.originalArtist
+	}
 	playListItemsTable.setData(playList.items)
 	playList_checkBoxShuffle.checked = playList.shuffle
 	playList_checkBoxPlayEntireList.checked = playList.entirePlay
@@ -91,7 +373,9 @@ function playListTable_deleteSelected() {
 				playState.viewContextStack.splice(i, playState.viewContextStack.length)
 				const ctx = playState.viewContextStack[playState.viewContextStack.length - 1]
 				playList_setPage(ctx.data)
-				playListItemsTable.selectedDataKey = ctx.currentViewingItem.key
+				if (ctx.currentViewingItem && playListItemsTable) {
+					playListItemsTable.selectedDataKey = ctx.currentViewingItem.key
+				}
 			} else {
 				array_clear(playState.viewContextStack)
 				playListItemsTable.setData([])
@@ -101,7 +385,7 @@ function playListTable_deleteSelected() {
 		}
 	}
 	if (!deleted) {
-		playListItemsTable.refreshList()
+		if (playListItemsTable) playListItemsTable.refreshList()
 	}
 	videoClipTable.updateList()
 
@@ -156,29 +440,36 @@ function refreshControlPanel() {
 		currentSong.innerHTML = ''
 	}
 
-	//removeAllChildNodes(divViewPath)
-	divViewPath.replaceChildren()
-	for (let i = 0; i < playState.viewContextStack.length; ++i) {
-		if (i != 0) {
-			const label = document.createElement('label')
-			label.appendChild(document.createTextNode('->'))
-			divViewPath.appendChild(label)
-		}
-		let data = playState.viewContextStack[i].data
-		let anchor = document.createElement('a')
-		anchor.innerHTML = `[${data.trackName} / ${data.originalArtist}]`
-		anchor.href = '#'
-		anchor.onclick = function(e) {
-			e.preventDefault()
-			const idx = i + 1
-			if (playState.viewContextStack.length >= idx) {
-				playState.viewContextStack.splice(idx, playState.viewContextStack.length)
-				const ctx = playState.viewContextStack[playState.viewContextStack.length - 1]
-				playList_setPage(ctx.data)
-				playListItemsTable.selectedDataKey = ctx.currentViewingItem.key
+	const pathEl = playState.activePanel ? playState.activePanel.pathEl : null
+	if (pathEl) {
+		pathEl.replaceChildren()
+		const panel = playState.activePanel
+		for (let i = 0; i < playState.viewContextStack.length; ++i) {
+			if (i != 0) {
+				const label = document.createElement('label')
+				label.appendChild(document.createTextNode('->'))
+				pathEl.appendChild(label)
 			}
+			let data = playState.viewContextStack[i].data
+			let anchor = document.createElement('a')
+			anchor.innerHTML = `[${data.trackName} / ${data.originalArtist}]`
+			anchor.href = '#'
+			anchor.onclick = (function(idx) {
+				return function(e) {
+					e.preventDefault()
+					panel_activate(panel)
+					if (panel.viewContextStack.length >= idx) {
+						panel.viewContextStack.splice(idx, panel.viewContextStack.length)
+						const ctx = panel.viewContextStack[panel.viewContextStack.length - 1]
+						playList_setPage(ctx.data)
+						if (ctx.currentViewingItem) {
+							playListItemsTable.selectedDataKey = ctx.currentViewingItem.key
+						}
+					}
+				}
+			})(i + 1)
+			pathEl.appendChild(anchor)
 		}
-		divViewPath.appendChild(anchor)
 	}
 
 	//removeAllChildNodes(divPlayPath)
@@ -193,17 +484,20 @@ function refreshControlPanel() {
 		let anchor = document.createElement('a')
 		anchor.innerHTML = `[${data.trackName} / ${data.originalArtist}]`
 		anchor.href = '#'
-		anchor.onclick = function(e) {
-			e.preventDefault()
-			playContext_copyFromPlay()
-			const idx = i + 1
-			if (playState.viewContextStack.length >= idx) {
-				playState.viewContextStack.splice(idx, playState.viewContextStack.length)
-				const ctx = playState.viewContextStack[playState.viewContextStack.length - 1]
-				playList_setPage(ctx.data)
-				playListItemsTable.selectedDataKey = ctx.currentViewingItem.key
+		anchor.onclick = (function(idx) {
+			return function(e) {
+				e.preventDefault()
+				playContext_copyFromPlay()
+				if (playState.viewContextStack.length >= idx) {
+					playState.viewContextStack.splice(idx, playState.viewContextStack.length)
+					const ctx = playState.viewContextStack[playState.viewContextStack.length - 1]
+					playList_setPage(ctx.data)
+					if (ctx.currentViewingItem && playListItemsTable) {
+						playListItemsTable.selectedDataKey = ctx.currentViewingItem.key
+					}
+				}
 			}
-		}
+		})(i + 1)
 		divPlayPath.appendChild(anchor)
 	}
 
@@ -304,10 +598,17 @@ function playListItemsTable_deleteAll() {
 function updateDivVisible() {
 	divTotallist.style.display = showTotallist.checked ? 'flex' : 'none'
 	divPlaylistPanel.style.display = showPlaylist.checked ? 'flex' : 'none'
-	divPlaylistItemsPanel.style.display = showPlaylistItems.checked ? 'flex' : 'none'
+	const hasPanels = playState.openPanels.length > 0
+	divPlaylistItemsControls.style.display = hasPanels ? 'flex' : 'none'
+	dynamicPanelsRow.style.display = hasPanels ? 'flex' : 'none'
 	divClipSpreadSheet.style.display = showClipTableURL.checked ? 'flex' : 'none'
 	divTestClipTime.style.display = showTestClipTime.checked ? 'flex' : 'none'
-	//playListItemsTable.adjustScroll()
+}
+
+function playListItemsTable_scrollToCurrent() {
+	if (playListItemsTable && playState.currentViewContext && playState.currentViewContext.currentPlayingItem) {
+		playListItemsTable.scrollToRowByDataKey(playState.currentViewContext.currentPlayingItem.key, true)
+	}
 }
 function playList_newPanel() {
 	playListDialog_Category.value = ''

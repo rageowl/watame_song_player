@@ -147,7 +147,11 @@ function playListTable_deleteAll(bSave = true) {
 	}
 
 	playListTable.setData([])
-	playListItemsTable.setData([])
+	for (let p of playState.openPanels) {
+		p.table.setData([])
+		p.viewContextStack.length = 0
+	}
+	if (playListItemsTable) playListItemsTable.setData([])
 	playState.playContextMap.clear()
 	array_clear(playState.playContextStack)
 	array_clear(playState.viewContextStack)
@@ -161,6 +165,7 @@ function playListTable_deleteAll(bSave = true) {
 	}
 }
 function playList_addToPlayListItemsByKeys(keys) {
+	if (!playListItemsTable || !playState.currentViewContext) return
 	let itemKeys = []
 	playListItemsTable.beginUpdate()
 	for (let i = 0; i < keys.length; ++i) {

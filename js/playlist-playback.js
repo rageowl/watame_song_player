@@ -194,7 +194,7 @@ function playVideoData(data) {
 	}
 	refreshControlPanel()
 	playListTable.updateList()
-	playListItemsTable.updateList()
+	if (playListItemsTable) playListItemsTable.updateList()
 
 	playState.interval = setInterval(function() {
 		curTime = Date.now()

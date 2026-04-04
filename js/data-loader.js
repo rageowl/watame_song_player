@@ -52,7 +52,6 @@ function readData_Finalize()
 	if (playListData != undefined && playListData.length > 0) {
 		showTotallist.checked = false
 		showPlaylist.checked = false
-		showPlaylistItems.checked = true
 		let playListMap = new Map()
 		for (let i = 0; i < playListData.length; ++i) {
 			let playList = playList_load(playListData[i])
@@ -78,7 +77,6 @@ function readData_Finalize()
 	} else {
 		showTotallist.checked = false
 		showPlaylist.checked = false
-		showPlaylistItems.checked = true
 
 		const headers = videoClipTable.selectHeader(['trackName'])
 		if (headers.length != 0) {
